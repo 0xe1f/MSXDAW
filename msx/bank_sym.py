@@ -1,0 +1,266 @@
+#!/usr/bin/env python3
+# Copyright 2026 Akop Karapetyan
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""Per-bank z80dasm symbol files, because msx.sym is flat and the ROM is banked.
+
+z80dasm -S maps CPU address -> one name. Two different things at the same CPU
+address in different banks cannot both win. This emits a filtered .sym:
+
+  * BIOS (addr < 0x4000) always
+  * msx.sym names whose address sits *outside* this bank's 8 KiB window
+  * Real labels defined in this bank (from the assembled symbol table)
+
+Auto labels (lXXXXh / sub_XXXXh) are left to z80dasm.
+
+Usage:
+  msx/bank_sym.py 2                 # write generated/bank02.z80dasm.sym
+  msx/bank_sym.py --audit           # print cross-bank collisions
+"""
+from __future__ import annotations
+
+import argparse
+import collections
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+_LIB = Path(__file__).resolve().parent.parent / "lib"
+if str(_LIB) not in sys.path:
+    sys.path.insert(0, str(_LIB))
+from game import load  # noqa: E402
+
+INCLUDE_RE = re.compile(r'^\s*INCLUDE\s+"([^"]+)"', re.I | re.M)
+LABEL_RE = re.compile(r"^[ \t]*([A-Za-z_][A-Za-z0-9_]*):")
+EQU_RE = re.compile(r"^([A-Za-z_][\w]*):\s*equ\s+0x([0-9a-fA-F]+)", re.I)
+AUTO_RE = re.compile(r"^(l|sub_)[0-9a-f]{4}h$", re.I)
+LST_OPEN = re.compile(r"^# file opened:\s+(\S+)")
+LST_CLOSE = re.compile(r"^# file closed:\s+(\S+)")
+LST_LABEL = re.compile(r"^\s*\d+\++\s*([0-9A-Fa-f]{4})\s+([A-Za-z_][\w]*):")
+BANK_FILE_RE = re.compile(r"(?:bank|seg)(\d{2})\.asm$", re.I)
+
+
+def is_auto(name: str) -> bool:
+    return bool(AUTO_RE.match(name))
+
+
+def assemble(g, need_lst: bool = False) -> None:
+    g.generated.mkdir(exist_ok=True)
+    all_sym = g.generated / "all.sym"
+    listing = g.generated / f"{g.name}.lst"
+    cmd = [str(g.sjasm), "--longptr", f"--sym={all_sym}", str(g.master_path)]
+    if need_lst:
+        cmd[2:2] = [f"--lst={listing}"]
+    subprocess.check_call(cmd, cwd=g.root, stdout=subprocess.DEVNULL)
+
+
+def load_all_sym(g) -> dict[str, int]:
+    path = g.generated / "all.sym"
+    if not path.exists():
+        assemble(g)
+    out: dict[str, int] = {}
+    for line in path.read_text().splitlines():
+        m = EQU_RE.match(line)
+        if m:
+            out[m.group(1)] = int(m.group(2), 16)
+    return out
+
+
+def load_msx_sym(g) -> list[tuple[str, int, str]]:
+    rows = []
+    if not g.sym_path.is_file():
+        return rows
+    for line in g.sym_path.read_text().splitlines():
+        m = EQU_RE.match(line)
+        if not m:
+            continue
+        rows.append((m.group(1), int(m.group(2), 16), line))
+    return rows
+
+
+def local_labels(g, bank: int, all_sym: dict[str, int]) -> set[str]:
+    lo = g.bank_org(bank)
+    hi = lo + g.bank_size
+    names: set[str] = set()
+    src = g.source_path
+    if not src.is_dir():
+        return names
+    for path in src.rglob("*.asm"):
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            continue
+        for line in text.splitlines():
+            m = LABEL_RE.match(line)
+            if not m or m.group(1) not in all_sym:
+                continue
+            addr = all_sym[m.group(1)]
+            if lo <= addr < hi:
+                names.add(m.group(1))
+    return names
+
+
+def emit_bank(g, bank: int) -> str:
+    lo = g.bank_org(bank)
+    hi = lo + g.bank_size
+    all_sym = load_all_sym(g)
+    local = local_labels(g, bank, all_sym)
+    msx = load_msx_sym(g)
+    chosen: dict[int, tuple[str, str]] = {}
+    msx_names_at: dict[int, list[str]] = collections.defaultdict(list)
+    for name, addr, _orig in msx:
+        msx_names_at[addr].append(name)
+
+    def put(name: str, addr: int, comment: str = "") -> None:
+        if addr >= 0xC000:
+            return
+        line = f"{name}: equ 0x{addr:04x}"
+        if comment:
+            line += "\t" + comment
+        chosen[addr] = (name, line)
+
+    for name, addr, orig in msx:
+        if addr < 0x4000:
+            put(name, addr)
+            continue
+        if lo <= addr < hi:
+            continue
+        if len(msx_names_at[addr]) > 1:
+            continue
+        put(name, addr)
+
+    for name in sorted(local):
+        if is_auto(name) or name not in all_sym:
+            continue
+        addr = all_sym[name]
+        if not (lo <= addr < hi):
+            continue
+        put(name, addr)
+
+    lines = [
+        f"; z80dasm -S file for bank {bank} (CPU 0x{lo:04X}-0x{hi-1:04X}).",
+        f"; Generated by msx/bank_sym.py — do not edit.",
+        "",
+    ]
+    for addr in sorted(chosen):
+        lines.append(chosen[addr][1])
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_bank(g, bank: int) -> Path:
+    g.generated.mkdir(exist_ok=True)
+    path = g.generated / f"{g.bank_stem(bank)}.z80dasm.sym"
+    path.write_text(emit_bank(g, bank))
+    return path
+
+
+def audit(g) -> str:
+    assemble(g, need_lst=True)
+    listing = g.generated / f"{g.name}.lst"
+    stack: list[tuple[str, int | None]] = [(g.master, None)]
+    at: dict[int, list[tuple[int, str, str]]] = collections.defaultdict(list)
+
+    def bank_of(fname: str, parent: int | None) -> int | None:
+        m = BANK_FILE_RE.search(os.path.basename(fname))
+        return int(m.group(1)) if m else parent
+
+    for line in listing.read_text(errors="replace").splitlines():
+        m = LST_OPEN.match(line)
+        if m:
+            fname = m.group(1)
+            parent = stack[-1][1]
+            stack.append((fname, bank_of(fname, parent)))
+            continue
+        m = LST_CLOSE.match(line)
+        if m:
+            if len(stack) > 1:
+                stack.pop()
+            continue
+        m = LST_LABEL.match(line)
+        if not m:
+            continue
+        addr = int(m.group(1), 16)
+        name = m.group(2)
+        _fname, bank = stack[-1]
+        if bank is None or addr < 0x4000 or addr >= 0xC000:
+            continue
+        at[addr].append((bank, name, os.path.basename(_fname)))
+
+    coll = []
+    for addr, hits in sorted(at.items()):
+        banks = {b for b, n, f in hits}
+        if len(banks) < 2:
+            continue
+        by_bank: dict[int, list[tuple[str, str]]] = collections.defaultdict(list)
+        seen = set()
+        for b, n, f in hits:
+            if (b, n) in seen:
+                continue
+            seen.add((b, n))
+            by_bank[b].append((n, f))
+        coll.append((addr, by_bank))
+
+    named_named = []
+    named_auto = []
+    for addr, by_bank in coll:
+        named = [b for b, ns in by_bank.items() if any(not is_auto(n) for n, _ in ns)]
+        if len(named) >= 2:
+            named_named.append((addr, by_bank))
+        elif len(named) == 1:
+            named_auto.append((addr, by_bank))
+
+    out = []
+    out.append(f"cross-bank CPU-address collisions: {len(coll)}")
+    out.append(f"  named vs named: {len(named_named)}")
+    out.append(f"  named vs auto:  {len(named_auto)}")
+    out.append("")
+    out.append("Named-vs-named:")
+    out.append("")
+    for addr, by_bank in named_named:
+        bits = []
+        for b in sorted(by_bank):
+            ns = ", ".join(n for n, _ in by_bank[b] if not is_auto(n))
+            bits.append(f"bank{b:02d} {ns}")
+        out.append(f"  0x{addr:04X}  " + "  |  ".join(bits))
+    return "\n".join(out) + "\n"
+
+
+def main(argv: list[str]) -> int:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("bank", nargs="?", type=int, help="bank number 0-based")
+    p.add_argument("--audit", action="store_true", help="print cross-bank collisions")
+    p.add_argument("--stdout", action="store_true", help="print the .sym instead of writing generated/")
+    args = p.parse_args(argv)
+    g = load()
+    if args.audit:
+        sys.stdout.write(audit(g))
+        return 0
+    if args.bank is None:
+        p.error("bank number required (or --audit)")
+    if not (0 <= args.bank < g.banks):
+        p.error(f"bank must be 0..{g.banks - 1}")
+    text = emit_bank(g, args.bank)
+    if args.stdout:
+        sys.stdout.write(text)
+    else:
+        path = write_bank(g, args.bank)
+        print(f"wrote {path}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

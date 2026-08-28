@@ -1,0 +1,7 @@
+CocoaMSX.xcodeproj/xcuserdata
+CocoaMSX.xcodeproj/project.xcworkspace
+.DS_Store
+
+# Traced Debug build (tools/disasm/build-cocoamsx.sh)
+generated/
+

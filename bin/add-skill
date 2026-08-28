@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Scaffold a new DAW skill and install the ~/.cursor/skills symlink.
+#
+#   add-skill <name>
+set -euo pipefail
+DAW="$(cd "$(dirname "$0")/.." && pwd)"
+name="${1:-}"
+[ -n "$name" ] || { echo "usage: add-skill <name>" >&2; exit 2; }
+dir="$DAW/skills/$name"
+if [ -e "$dir" ]; then
+  echo "already exists: $dir" >&2
+  "$DAW/bin/install-skills"
+  exit 0
+fi
+mkdir -p "$dir"
+cat > "$dir/SKILL.md" <<EOF
+---
+name: ${name}
+description: >-
+  TODO: one or two sentences, including when to use this skill.
+---
+
+# ${name}
+
+Generic MSXDAW skill. No ROM-specific addresses, stem lists, or dumpers.
+If it only applies to one cart, it belongs in that game's \`.agents/skills/\`.
+EOF
+"$DAW/bin/install-skills"
+echo "created $dir/SKILL.md"

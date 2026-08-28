@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Idempotent: symlink each skills/<name> into ~/.cursor/skills/<name>.
+set -euo pipefail
+DAW="$(cd "$(dirname "$0")/.." && pwd)"
+DEST="${CURSOR_SKILLS:-$HOME/.cursor/skills}"
+mkdir -p "$DEST"
+n=0
+for d in "$DAW/skills"/*/; do
+  [ -d "$d" ] || continue
+  name="$(basename "$d")"
+  ln -sfn "$d" "$DEST/$name"
+  n=$((n + 1))
+done
+echo "linked $n skill(s) -> $DEST"

@@ -1,0 +1,12 @@
+MSXDAW (MSX Disassembly Workbench)
+Copyright 2026 Akop Karapetyan
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+This Apache license covers original work in this repository: tools, skills,
+templates, comments, and project structure.
+
+cocoamsx/ is CocoaMSX (based on blueMSX) with DISASMTRACE instrumentation.
+That subtree keeps its own license notices and is not relicensed Apache 2.0.
+
+Konami game ROMs, graphics, and music are not part of this repository.

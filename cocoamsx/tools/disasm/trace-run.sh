@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+# Run the DISASMTRACE CocoaMSX build. F9 dumps a RAM snapshot; F8 toggles auto-snap.
+#
+#   tools/disasm/trace-run.sh [rom]
+#
+# Game repo from workbench.cfg (cwd walk or GAME=). VK= is still accepted as an alias.
+# Snapshots and the exec/watch log land in the game's generated/ (gitignored there).
+#
+# Environment knobs (all optional):
+#   GAME   game repo (default: walk for workbench.cfg)
+#   VK     alias for GAME (legacy)
+#   EXEC   exec address ranges, e.g. "6552-66c0"
+#   WATCH  memory-write ranges, e.g. "ce00-ce15"
+#   LOG    trace log
+#   SNAP   snapshot file
+#   SNAPRANGE  RAM window per snapshot (default c000-dfff)
+#   DEDUP  0 = log every executed address (default 1)
+#   SOFTGL 0 = hardware OpenGL (default 1 = Apple software GL)
+set -euo pipefail
+src="$(cd "$(dirname "$0")/../.." && pwd)"
+daw="$(cd "$src/.." && pwd)"
+export PYTHONPATH="${daw}/lib${PYTHONPATH:+:$PYTHONPATH}"
+if [ -n "${GAME:-}" ]; then
+  :
+elif [ -n "${VK:-}" ]; then
+  export GAME="$VK"
+fi
+if python3 "$daw/lib/game.py" --root >/dev/null 2>&1; then
+  game="$(python3 "$daw/lib/game.py" --root)"
+  default_rom="$(python3 "$daw/lib/game.py" --rom)"
+else
+  game="${GAME:-$HOME/code/vampirekiller}"
+  default_rom="$game/VampireKiller.rom"
+fi
+
+app="$src/generated/cocoamsx-dd/Build/Products/Debug/CocoaMSX.app/Contents/MacOS/CocoaMSX"
+if [ ! -x "$app" ]; then
+    echo "traced build not found - run $src/tools/disasm/build-cocoamsx.sh first" >&2
+    exit 1
+fi
+
+rom="${1:-$default_rom}"
+log="${LOG:-$game/generated/disasmtrace.log}"
+snap="${SNAP:-$game/generated/disasmsnap.bin}"
+mkdir -p "$(dirname "$log")" "$(dirname "$snap")"
+
+echo "app        $app"
+echo "rom        $rom"
+echo "trace log  $log   (exec='${EXEC:-}' watch='${WATCH:-}')"
+echo "snapshots  $snap  (F9 capture; range ${SNAPRANGE:-c000-dfff})"
+if [ "${SOFTGL:-1}" != "0" ]; then
+    export COCOAMSX_SOFTWARE_GL=1
+fi
+export DISASM_TRACE=1
+export DISASM_DEDUP="${DEDUP:-1}"
+export DISASM_EXEC="${EXEC:-}"
+export DISASM_WATCH="${WATCH:-}"
+export DISASM_LOG="$log"
+export DISASM_SNAP="$snap"
+export DISASM_SNAP_RANGE="${SNAPRANGE:-c000-dfff}"
+exec "$app" "$rom"

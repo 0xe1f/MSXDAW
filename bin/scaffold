@@ -1,0 +1,153 @@
+#!/usr/bin/env bash
+# Copyright 2026 Akop Karapetyan
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Scaffold a new MSXDAW game repo.
+#
+#   scaffold <dest-dir> --name KingsValley2 --mapper konami-scc [--rom path]
+set -euo pipefail
+DAW="$(cd "$(dirname "$0")/.." && pwd)"
+
+dest=""
+name=""
+mapper="konami4"
+rom=""
+banks=16
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --name) name="$2"; shift 2 ;;
+    --mapper) mapper="$2"; shift 2 ;;
+    --rom) rom="$2"; shift 2 ;;
+    --banks) banks="$2"; shift 2 ;;
+    -*) echo "unknown flag $1" >&2; exit 2 ;;
+    *) dest="$1"; shift ;;
+  esac
+done
+[ -n "$dest" ] || { echo "usage: scaffold <dir> --name Game [--mapper konami-scc] [--rom file]" >&2; exit 2; }
+[ -n "$name" ] || name="$(basename "$dest")"
+
+mkdir -p "$dest"
+dest="$(cd "$dest" && pwd)"
+
+if [ ! -d "$dest/.git" ]; then
+  git -C "$dest" init -q
+fi
+
+# Submodule: prefer relative path if dest is a sibling of DAW.
+daw_parent="$(cd "$DAW/.." && pwd)"
+dest_parent="$(cd "$dest/.." && pwd)"
+if [ "$daw_parent" = "$dest_parent" ]; then
+  url="../$(basename "$DAW")"
+else
+  url="$DAW"
+fi
+mkdir -p "$dest/tools"
+if [ ! -e "$dest/tools/workbench" ]; then
+  git -C "$dest" submodule add -q "$url" tools/workbench
+fi
+
+mkdir -p "$dest/banks" "$dest/docs" "$dest/.agents/skills" "$dest/generated"
+touch "$dest/.agents/skills/.gitkeep"
+
+cat > "$dest/workbench.cfg" <<EOF
+name = ${name}
+master = ${name}.asm
+rom = ${name}.rom
+mapper = ${mapper}
+banks = ${banks}
+bank_size = 8192
+source_dir = banks
+bank_prefix = bank
+sym = banks/msx.sym
+scan_banks = 0,1,2,3
+EOF
+
+cp "$DAW/scaffold/bios.inc" "$dest/banks/bios.inc"
+cp "$DAW/scaffold/ram.inc" "$dest/banks/ram.inc"
+: > "$dest/banks/msx.sym"
+
+sha1="(run probe / shasum after providing the ROM)"
+if [ -n "$rom" ] && [ -f "$rom" ]; then
+  cp "$rom" "$dest/${name}.rom"
+  sha1="$(shasum -a 1 "$dest/${name}.rom" | awk '{print $1}')"
+  printf '%s  %s.rom\n' "$sha1" "$name" > "$dest/${name}.sha1"
+  # extract leftover bins
+  python3 -c "
+from pathlib import Path
+rom = Path('${dest}/${name}.rom').read_bytes()
+n = ${banks}
+dest = Path('${dest}/banks')
+for i in range(n):
+    dest.joinpath(f'bank{i:02d}.bin').write_bytes(rom[i*8192:(i+1)*8192])
+print('extracted', n, 'banks')
+"
+fi
+
+{
+  echo "; ==========================================================================="
+  echo ";  ${name}  —  MSXDAW scaffold. Mapper: ${mapper}, ${banks} x 8 KiB banks."
+  echo ";  One INCBIN per bank until a bank is folded into banks/bankNN.asm."
+  echo "; ==========================================================================="
+  echo
+  echo "    OUTPUT \"${name}.rom\""
+  echo "    ORG 0x0000"
+  echo
+  echo "    INCLUDE \"banks/bios.inc\""
+  echo "    INCLUDE \"banks/ram.inc\""
+  echo
+  i=0
+  while [ "$i" -lt "$banks" ]; do
+    nn=$(printf "%02d" "$i")
+    page=$((i % 4))
+    case $page in
+      0) org=0x4000 ;;
+      1) org=0x6000 ;;
+      2) org=0x8000 ;;
+      3) org=0xA000 ;;
+    esac
+    echo "; --- bank ${nn} ---"
+    echo "    PHASE ${org}"
+    if [ -f "$dest/banks/bank${nn}.bin" ]; then
+      echo "    INCBIN \"banks/bank${nn}.bin\""
+    else
+      echo "    ; INCBIN \"banks/bank${nn}.bin\"   ; add ROM and re-run split-rom"
+      echo "    ds 8192, 0"
+    fi
+    echo "    DEPHASE"
+    echo
+    i=$((i + 1))
+  done
+} > "$dest/${name}.asm"
+
+cp "$DAW/scaffold/Makefile" "$dest/Makefile"
+cp "$DAW/scaffold/gitignore" "$dest/.gitignore"
+cp "$DAW/scaffold/AGENTS.md" "$dest/AGENTS.md"
+sed -i '' "s/__GAME__/${name}/g" "$dest/Makefile" "$dest/AGENTS.md" "$dest/.gitignore"
+
+cat > "$dest/docs/progress.md" <<EOF
+# ${name} — progress
+
+Scaffolded by MSXDAW. Next: provide the ROM (gitignored), \`make verify\`,
+\`tools/workbench/bin/probe\`, regen bank 0 into \`banks/bank00.asm\`.
+
+Do not invent paging-window files until this cart's mapper schedule is known.
+EOF
+
+cat > "$dest/docs/game-notes.md" <<EOF
+# ${name} — notes
+
+Mapper: ${mapper}. See \`docs/probe.md\` after running probe.
+EOF
+
+echo "scaffolded $dest ($name, mapper=$mapper)"

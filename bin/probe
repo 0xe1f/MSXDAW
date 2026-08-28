@@ -1,0 +1,137 @@
+#!/usr/bin/env python3
+# Copyright 2026 Akop Karapetyan
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+"""First-pass identification of an MSX MegaROM: size, AB header, Konami stamp,
+mapper-register stores, SCC enable. Writes docs/probe.md when a game root exists.
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import sys
+from collections import Counter
+from pathlib import Path
+
+_LIB = Path(__file__).resolve().parent.parent / "lib"
+if str(_LIB) not in sys.path:
+    sys.path.insert(0, str(_LIB))
+
+# ld (nn),a  = 32 lo hi
+MAPPER_HINTS = {
+    0x5000: "konami-scc page 4000-5FFF / bank select",
+    0x6000: "konami4 page 6000-7FFF / bank select",
+    0x7000: "konami-scc page 6000-7FFF / bank select",
+    0x8000: "konami4 page 8000-9FFF / bank select",
+    0x9000: "konami-scc page 8000-9FFF / bank select (3F enables SCC)",
+    0xA000: "konami4 page A000-BFFF / bank select",
+    0xB000: "konami-scc page A000-BFFF / bank select",
+}
+
+
+def _stores_to(rom: bytes, nn: int) -> int:
+    lo, hi = nn & 0xFF, nn >> 8
+    n = 0
+    for i in range(len(rom) - 2):
+        if rom[i] == 0x32 and rom[i + 1] == lo and rom[i + 2] == hi:
+            n += 1
+    return n
+
+
+def probe_bytes(rom: bytes) -> list[str]:
+    lines = []
+    sha1 = hashlib.sha1(rom).hexdigest()
+    lines.append(f"- size: {len(rom)} bytes ({len(rom) // 1024} KiB)")
+    lines.append(f"- sha1: `{sha1}`")
+    banks = len(rom) // 8192
+    lines.append(f"- 8 KiB banks: {banks}")
+
+    # Cartridge header is in bank 0 at CPU 0x4000 = file offset 0.
+    hdr = rom[:16]
+    if hdr[0:2] == b"AB":
+        init = hdr[2] | (hdr[3] << 8)
+        lines.append(f"- MSX `AB` header at bank 0; init={init:#06x}")
+    else:
+        lines.append(f"- no `AB` at file offset 0 (got {hdr[0:2]!r})")
+
+    # Konami 16K page stamp: last 3 bytes of 0x4000-0x7FFF (file 0x3FFD-0x3FFF)
+    if len(rom) >= 0x4000:
+        stamp = rom[0x3FFD:0x4000]
+        lines.append(
+            f"- bytes at CPU 0x7FFD-0x7FFF (file 0x3FFD): "
+            f"{stamp.hex()} (Konami RC BCD + 0xAA often ends a 16K page)"
+        )
+
+    lines.append("- `ld (nn),a` hits at mapper-select addresses:")
+    hits = {}
+    for nn, hint in MAPPER_HINTS.items():
+        c = _stores_to(rom, nn)
+        hits[nn] = c
+        if c:
+            lines.append(f"  - `{nn:#06x}` x{c}  ({hint})")
+    scc4 = hits.get(0x5000, 0) + hits.get(0x7000, 0) + hits.get(0x9000, 0) + hits.get(0xB000, 0)
+    k4 = hits.get(0x6000, 0) + hits.get(0x8000, 0) + hits.get(0xA000, 0)
+    if scc4 > k4:
+        guess = "konami-scc"
+    elif k4:
+        guess = "konami4"
+    else:
+        guess = "unknown"
+    lines.append(f"- mapper guess: **{guess}** (SCC-style hits={scc4}, Konami4-style hits={k4})")
+
+    # ld a,3Fh / ld (9000h),a  = 3E 3F 32 00 90  (and nearby variants)
+    scc_en = rom.find(b"\x3e\x3f\x32\x00\x90")
+    lines.append(
+        "- SCC enable sequence `ld a,3Fh / ld (9000h),a`: "
+        + (f"yes (file offset {scc_en:#x})" if scc_en >= 0 else "not found as a contiguous 5-byte pack")
+    )
+    return lines
+
+
+def main(argv: list[str]) -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("rom", nargs="?", help="ROM path (default: game workbench.cfg)")
+    ap.add_argument("-o", "--out", help="markdown output path")
+    args = ap.parse_args(argv)
+
+    rom_path = None
+    game_root = None
+    if args.rom:
+        rom_path = Path(args.rom)
+    else:
+        try:
+            from game import load
+            g = load()
+            rom_path = g.rom_path
+            game_root = g.root
+        except SystemExit:
+            ap.error("ROM path required (no workbench.cfg in cwd)")
+
+    if not rom_path.is_file():
+        sys.exit(f"no ROM at {rom_path}")
+    rom = rom_path.read_bytes()
+    body = ["# Probe", "", f"ROM: `{rom_path}`", ""] + probe_bytes(rom) + [""]
+    text = "\n".join(body)
+    out = Path(args.out) if args.out else (game_root / "docs" / "probe.md" if game_root else None)
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(text)
+        print(f"wrote {out}")
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
