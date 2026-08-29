@@ -8,4 +8,8 @@ This is an [MSXDAW](https://github.com/) game repo (MSX Disassembly Workbench).
 
 **Placement:** if a helper would apply to a second MSX/Konami cart, put it in msxdaw. If it names this ROM’s stems, RAM, banks, or dumpers, keep it in this repo.
 
+**Byte-exact round-trip at every step.** `make verify` must match the committed
+`<Game>.sha1`. Run it after every edit. Never commit a change that breaks it.
+An original ROM dump is not required to assemble or verify.
+
 Default source split is **one file per 8 KiB mapper bank** (`banks/bank00.asm`). Do not invent paging-window files until this cart’s mapper schedule is known. Say **bank**, not segment.
