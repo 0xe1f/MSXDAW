@@ -29,13 +29,15 @@ xref finds callers.
 
 ```
 tools/workbench/cocoamsx/tools/disasm/build-cocoamsx.sh
-WATCH=ce00-ce15 tools/workbench/cocoamsx/tools/disasm/trace-run.sh
+tools/workbench/cocoamsx/tools/disasm/trace-run.sh
+COCOAMSX_ROM2=/path/to/GameMaster.rom tools/workbench/cocoamsx/tools/disasm/trace-run.sh
 tools/workbench/cocoamsx/tools/disasm/cocoamsx-ctl peek c425
 tools/workbench/cocoamsx/tools/disasm/snapdiff.py generated/disasmsnap.bin
 ```
 
 `trace-run.sh` finds the game via `workbench.cfg` (cwd or `GAME=`). Pass a ROM
-path to override.
+path to override. `COCOAMSX_ROM2` inserts a second cartridge in slot 2 before
+the startup ROM boots (Vampire Killer + Game Master).
 
 **Never kill a running emulator** (`kill`, `pkill`, closing the window)
 unless the user asks. They are often mid-recording.

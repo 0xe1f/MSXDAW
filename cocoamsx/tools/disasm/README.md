@@ -16,6 +16,7 @@ The game ROM, snapshot file, and exec/watch log stay in the **game** repo
 ```
 tools/disasm/build-cocoamsx.sh
 WATCH=ce00-ce15 tools/disasm/trace-run.sh
+COCOAMSX_ROM2=/path/to/GameMaster.rom tools/disasm/trace-run.sh
 tools/disasm/cocoamsx-ctl peek c425
 tools/disasm/snapdiff.py generated/disasmsnap.bin
 ```

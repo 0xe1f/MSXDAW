@@ -652,6 +652,10 @@ CMEmulatorController *theEmulator = nil; // FIXME
 		
 		if ([self fileToLoadAtStartup])
 		{
+			const char *rom2 = getenv("COCOAMSX_ROM2");
+			if (rom2 && rom2[0])
+				insertCartridge([self properties], 1, rom2, NULL, ROM_UNKNOWN, -1);
+
 			tryLaunchUnknownFile([self properties], [[self fileToLoadAtStartup] UTF8String], YES);
 			
 			[self addToRecentItems:[self fileToLoadAtStartup]];

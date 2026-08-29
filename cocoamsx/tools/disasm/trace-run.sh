@@ -18,6 +18,7 @@
 #   COCOAMSX_ACCELERATED  0 = CPU drawRect present (default: GPU CALayer)
 #   COCOAMSX_SOCKET       control socket (default /tmp/cocoamsx.sock)
 #   COCOAMSX_CONFIG       JSON config path
+#   COCOAMSX_ROM2         second cartridge (slot 2) inserted before autostart
 set -euo pipefail
 src="$(cd "$(dirname "$0")/../.." && pwd)"
 daw="$(cd "$src/.." && pwd)"
