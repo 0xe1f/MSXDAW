@@ -60,6 +60,13 @@ readable; space often becomes `0x00`.
 
 - Inline word-table dispatch by index in A (`DISPATCH_A`). Check for `dec a`
   (off-by-one) before the dispatch.
+- Consecutive-bank **triplet pager**: A = first bank; write A, `inc a`, write,
+  `inc a`, write to the three switchable mapper ports. Wrappers are
+  `ld a,N / jr shared_tail`. Current triplet is often mirrored in work RAM
+  and restored after a far call. That helper is the ground truth for
+  `bank_org` (`msx-code-data`).
+- A paged bank often starts with `jp`/`jp`/`jp` matching `call 6000h` /
+  `6003h` / `6006h` from the resident bank after paging that triplet.
 - A jump table at the end of a bank can continue into the next page. Mapper
   switch addresses are typically write-only; a *read* returns the ROM currently
   paged there.

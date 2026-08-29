@@ -15,9 +15,9 @@ submodule `tools/workbench`.
 | `lib/game.py` | Find the game root (`workbench.cfg`) |
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
 | `bin/scaffold` | New game repo |
-| `bin/add-skill` / `bin/install-skills` | Skills + `~/.cursor/skills` symlinks |
+| `bin/add-skill` / `bin/install-skills` | Skills + project `.cursor/skills` symlinks |
 | `cocoamsx/` | Research display: CALayer present, JSON config, control socket (`tools/disasm/`, skill `msx-cocoamsx`) |
-| `skills/` | Generic agent skills (no ROM-specific addresses) |
+| `skills/` | Generic agent skills (no ROM-specific addresses). After bootstrap, `msx-code-data` |
 | `scaffold/` | Templates copied by `bin/scaffold` |
 
 ## Vocabulary
@@ -35,7 +35,7 @@ one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo.
 ## Skills
 
 ```
-bin/install-skills    # symlink skills/* -> ~/.cursor/skills/
+bin/install-skills    # symlink skills/* -> <project>/.cursor/skills/
 bin/add-skill NAME    # create skills/NAME + install
 ```
 

@@ -20,3 +20,12 @@ tools/workbench/konami/psgplay.py Game.rom --map 14@8000,15@a000 \
 ```
 
 Not SCC wavetable (add a Konami SCC helper when a cart needs it).
+
+## Driver bank
+
+Packed-PSG payload often follows a word table indexed by `id*2`. The table
+may overlap the last `ld (9000h),a / ret` of the SCC page restore (`table[0]`
+unused; `table[1]` = first stream). Mark `worddata` from the first exclusive
+entry; mark the rest of that bank (and often the next triplet window)
+`bytedata` until streams are named. SCC enable is `ld a,3Fh / ld (9000h),a`;
+wavetable copy is 32 bytes into `9800` + n*0x20.

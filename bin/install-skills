@@ -1,14 +1,75 @@
 #!/usr/bin/env bash
-# Idempotent: symlink each skills/<name> into ~/.cursor/skills/<name>.
+# Idempotent: symlink each skills/<name> into the current project's
+# .cursor/skills/<name>. Never writes to ~/.cursor/skills.
 set -euo pipefail
 DAW="$(cd "$(dirname "$0")/.." && pwd)"
-DEST="${CURSOR_SKILLS:-$HOME/.cursor/skills}"
+HOME_SKILLS="${HOME}/.cursor/skills"
+
+canon() {
+  local p="${1%/}"
+  printf '%s\n' "$p"
+}
+
+project_root() {
+  local d="$PWD"
+  while [ "$d" != "/" ]; do
+    if [ -f "$d/workbench.cfg" ]; then
+      printf '%s\n' "$d"
+      return
+    fi
+    d="$(dirname "$d")"
+  done
+  if [ "$(basename "$DAW")" = "workbench" ] \
+     && [ "$(basename "$(dirname "$DAW")")" = "tools" ] \
+     && [ -f "$DAW/../../workbench.cfg" ]; then
+    (cd "$DAW/../.." && pwd)
+    return
+  fi
+  printf '%s\n' "$DAW"
+}
+
+if [ -n "${CURSOR_SKILLS:-}" ]; then
+  DEST="$CURSOR_SKILLS"
+else
+  DEST="$(project_root)/.cursor/skills"
+fi
+
+if [ "$(canon "$DEST")" = "$(canon "$HOME_SKILLS")" ]; then
+  echo "install-skills: refusing ~/.cursor/skills (user-global)" >&2
+  exit 1
+fi
+
 mkdir -p "$DEST"
+DEST="$(cd "$DEST" && pwd)"
+if [ -d "$HOME_SKILLS" ] && [ "$DEST" = "$(cd "$HOME_SKILLS" && pwd)" ]; then
+  echo "install-skills: refusing ~/.cursor/skills (user-global)" >&2
+  exit 1
+fi
+
+relpath() {
+  python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$1" "$2"
+}
+
 n=0
 for d in "$DAW/skills"/*/; do
   [ -d "$d" ] || continue
   name="$(basename "$d")"
-  ln -sfn "$d" "$DEST/$name"
+  ln -sfn "$(relpath "$d" "$DEST")" "$DEST/$name"
   n=$((n + 1))
 done
+
+if [ -d "$HOME_SKILLS" ]; then
+  for link in "$HOME_SKILLS"/*; do
+    [ -e "$link" ] || [ -L "$link" ] || continue
+    [ -L "$link" ] || continue
+    t="$(readlink "$link")"
+    case "$t" in
+      "$DAW/skills"/*|*/tools/workbench/skills/*|*/msxdaw/skills/*)
+        rm -f "$link"
+        echo "unlinked user-global $(basename "$link")"
+        ;;
+    esac
+  done
+fi
+
 echo "linked $n skill(s) -> $DEST"

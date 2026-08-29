@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Scaffold a new DAW skill and install the ~/.cursor/skills symlink.
+# Scaffold a new DAW skill and install the project .cursor/skills symlink.
 #
 #   add-skill <name>
 set -euo pipefail

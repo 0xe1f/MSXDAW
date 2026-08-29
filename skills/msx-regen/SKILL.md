@@ -20,8 +20,8 @@ tools/workbench/msx/regen-bank.sh <n> [origin-hex] [banks/bankNN.blocks]
 ```
 
 `<n>` is the 8 KiB bank index (0-based). Origin defaults to `workbench.cfg`
-`bank_org`. Optional `.blocks` marks code vs data (rendering only). How to seed it:
-`msx-code-data`.
+`bank_org`. Optional `.blocks` marks code vs data (rendering only). How to
+seed it: `msx-code-data`. Do not regen until `bank_org` matches the pager.
 
 Writes gitignored scratch:
 
@@ -30,6 +30,24 @@ Writes gitignored scratch:
 
 Never copy the generated file over annotated source. Never commit z80dasm
 `;addr bytes ascii` tails. `strip-listing.py` is the safety net.
+
+## Graduate one leftover bank
+
+1. Confirm CPU origin from paging helpers; put it in `bank_org` and the
+   master’s `PHASE` (`msx-code-data`). Skip gfx / packed-PSG / table-only
+   payload banks (named `INCBIN`, not z80dasm).
+2. `regen-bank.sh N [origin] [banks/bankNN.blocks]`
+3. Grep `generated/<prefix>NN.raw.asm` for `;illegal sequence`.
+4. Prepend a bank header; copy the **generated** file (not raw) to
+   `banks/bankNN.asm`. Drop z80dasm’s `equ` lines (those symbols live in
+   other banks or `bios.inc`). Master: `INCBIN` → `INCLUDE`.
+5. BIOS-lie audit on non-`call`/`jp`/`jr` lines. `make verify`, then
+   `make banks` (drops the leftover `.bin`).
+6. Two banks in the same CPU window (`bank_org` repeat) cannot share
+   z80dasm `lXXXXh` / `sub_XXXXh` names. Wrap the INCLUDE in
+   `MODULE bankNN` / `ENDMODULE`, or prefix auto labels. Do not put
+   those addresses in `msx.sym` (the next bank in that window would
+   steal the name).
 
 ## Symbols (`msx.sym` is flat, the ROM is banked)
 

@@ -150,4 +150,6 @@ cat > "$dest/docs/game-notes.md" <<EOF
 Mapper: ${mapper}. See \`docs/probe.md\` after running probe.
 EOF
 
+( cd "$dest" && "$DAW/bin/install-skills" )
+
 echo "scaffolded $dest ($name, mapper=$mapper)"
