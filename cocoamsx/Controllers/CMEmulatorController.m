@@ -30,6 +30,8 @@
 
 #import "CMPreferences.h"
 #import "CMMSXKeyboard.h"
+#import "CMConfig.h"
+#import "CMControlServer.h"
 
 #import "NSString+CMExtensions.h"
 
@@ -104,8 +106,6 @@
                    allowedFileTypes:(NSArray*)allowedFileTypes
                     openInDirectory:(NSString*)initialDirectory
                   completionHandler:(void (^)(NSString *file, NSString *path))handler;
-
-- (void) startWithState:(NSString *) state;
 
 - (void) addToRecentItems:(NSString *) path;
 - (void)insertCartridgeIntoSlot:(NSInteger)slot;
@@ -420,11 +420,28 @@ CMEmulatorController *theEmulator = nil; // FIXME
 		}
 	}
 	
-	[self startWithState:statePath];
+    [self startWithState:statePath];
 	if (statePath) {
 		[[NSFileManager defaultManager] removeItemAtPath:statePath
 												   error:NULL];
 	}
+
+    NSInteger sc = [CMConfig sharedConfig].scale;
+    if (sc < 1) sc = 2;
+    [self setScreenSize:NSMakeSize(320 * sc, 240 * sc) animate:NO];
+    [screen setAccelerated:[CMConfig sharedConfig].accelerated];
+    [[CMControlServer sharedServer] startWithEmulator:self];
+}
+
+- (void)applyLiveConfig
+{
+    CMConfig *cfg = [CMConfig sharedConfig];
+    [screen setAccelerated:cfg.accelerated];
+    if ([self isInitialized] && mixer) {
+        properties->sound.masterVolume = (int)cfg.volume;
+        mixerSetMasterVolume(mixer, properties->sound.masterVolume);
+        [self setEmulationSpeedAsPercentage:cfg.speed];
+    }
 }
 
 - (CMAppDelegate*)theApp
@@ -450,17 +467,18 @@ CMEmulatorController *theEmulator = nil; // FIXME
     machineSetDirectory([prefs.machineDirectory UTF8String]);
     
     properties = propCreate(0, 0, P_KBD_EUROPEAN, 0, "");
-    
+
+    CMConfig *cfg = [CMConfig sharedConfig];
     strncpy(properties->emulation.machineName,
-            [CMGetObjPref(@"machineConfiguration") cStringUsingEncoding:NSUTF8StringEncoding],
+            [cfg.machine cStringUsingEncoding:NSUTF8StringEncoding],
             PROP_MAXPATH - 1);
     
     // Initialize the emulator
     
-    properties->emulation.speed = [self emulationFrequencyFromPercentage:CMGetIntPref(@"emulationSpeedPercentage")];
+    properties->emulation.speed = [self emulationFrequencyFromPercentage:cfg.speed];
     properties->emulation.syncMethod = P_EMU_SYNCTOVBLANKASYNC;
     properties->emulation.enableFdcTiming = CMGetBoolPref(@"enableFloppyTiming");
-    properties->emulation.vdpSyncMode = CMGetIntPref(@"vdpSyncMode");
+    properties->emulation.vdpSyncMode = P_VDP_SYNC60HZ;
 	properties->emulation.enableCasPatch = CMGetBoolPref(@"enableCasPatch");
 	
     properties->video.brightness = CMGetIntPref(@"videoBrightness");
@@ -470,7 +488,7 @@ CMEmulatorController *theEmulator = nil; // FIXME
     properties->video.colorSaturationWidth = CMGetIntPref(@"videoRfModulation");
     properties->video.colorSaturationEnable = (properties->video.colorSaturationWidth > 0);
     properties->video.deInterlace = CMGetBoolPref(@"videoEnableDeInterlacing");
-    properties->video.monitorType = CMGetIntPref(@"videoSignalMode");
+    properties->video.monitorType = P_VIDEO_PALNONE;
     properties->video.monitorColor = CMGetIntPref(@"videoColorMode");
 	
     properties->sound.mixerChannel[MIXER_CHANNEL_PSG].volume = CMGetIntPref(@"audioVolumePsg");
@@ -533,6 +551,7 @@ CMEmulatorController *theEmulator = nil; // FIXME
         mixerEnableChannelType(mixer, i, properties->sound.mixerChannel[i].enable);
     }
     
+    properties->sound.masterVolume = (int)cfg.volume;
     mixerSetMasterVolume(mixer, properties->sound.masterVolume);
     mixerEnableMaster(mixer, properties->sound.masterEnable);
     

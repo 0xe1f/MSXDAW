@@ -24,8 +24,10 @@
 
 #import "CMPreferences.h"
 #import "CMAboutController.h"
+#import "CMConfig.h"
 
 #import <IOKit/pwr_mgt/IOPMLib.h>
+#include <signal.h>
 
 @interface CMAppDelegate ()
 
@@ -42,7 +44,7 @@
 	
 	CMAboutController *_aboutController;
 	CMEmulatorController *_emulator;
-	CMPreferenceController *_preferenceController;
+	dispatch_source_t _hupSource;
 }
 
 #pragma mark - Initialization & Deallocation
@@ -328,6 +330,16 @@
                                             forKeyPath:@"preventSleep"
                                                options:NSKeyValueObservingOptionNew
                                                context:NULL];
+
+    signal(SIGHUP, SIG_IGN);
+    _hupSource = dispatch_source_create(DISPATCH_SOURCE_TYPE_SIGNAL, SIGHUP, 0,
+                                        dispatch_get_main_queue());
+    dispatch_source_set_event_handler(_hupSource, ^{
+        [[CMConfig sharedConfig] reload];
+        [[self emulator] applyLiveConfig];
+        NSLog(@"SIGHUP: reloaded config");
+    });
+    dispatch_resume(_hupSource);
 }
 
 - (void)applicationWillTerminate:(NSNotification *)notification
@@ -363,11 +375,7 @@
 
 - (void) openPreferences:(id) sender
 {
-	if (!_preferenceController) {
-		_preferenceController = [[CMPreferenceController alloc] init];
-	}
-	
-	[_preferenceController showWindow:self];
+    NSLog(@"Preferences UI removed; edit cocoamsx.json and reload-config / SIGHUP");
 }
 
 @end

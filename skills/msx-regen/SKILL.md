@@ -20,7 +20,8 @@ tools/workbench/msx/regen-bank.sh <n> [origin-hex] [banks/bankNN.blocks]
 ```
 
 `<n>` is the 8 KiB bank index (0-based). Origin defaults to `workbench.cfg`
-`bank_org`. Optional `.blocks` marks code vs data (rendering only).
+`bank_org`. Optional `.blocks` marks code vs data (rendering only). How to seed it:
+`msx-code-data`.
 
 Writes gitignored scratch:
 
@@ -49,5 +50,5 @@ tools/workbench/msx/split-rom.sh
 Extracts unmigrated `banks/bankNN.bin` from the ROM; deletes bins for migrated
 banks (`migrated=all` or a `bankNN.asm` exists).
 
-After regen: audit BIOS-name lies on non-`call`/`jp`/`jr` lines. `make verify`.
-Naming: `konami-msx-disasm`.
+After regen: audit BIOS-name lies on non-`call`/`jp`/`jr` lines. `make verify`
+after every edit; never commit a break. Naming: `konami-msx-disasm`.

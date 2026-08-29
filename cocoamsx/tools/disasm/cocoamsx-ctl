@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Send one line to the CocoaMSX control socket and print the reply.
+#
+#   cocoamsx-ctl peek c425
+#   cocoamsx-ctl watch c400-c41f
+#   cocoamsx-ctl hold space 10
+#
+# Socket: COCOAMSX_SOCKET, else /tmp/cocoamsx.sock
+set -euo pipefail
+sock="${COCOAMSX_SOCKET:-/tmp/cocoamsx.sock}"
+if [ ! -S "$sock" ]; then
+    echo "no socket at $sock (is CocoaMSX running?)" >&2
+    exit 1
+fi
+if [ $# -eq 0 ]; then
+    echo "usage: cocoamsx-ctl <command> [args...]" >&2
+    exit 2
+fi
+python3 - "$sock" "$@" <<'PY'
+import socket, sys
+path, args = sys.argv[1], sys.argv[2:]
+line = " ".join(args) + "\n"
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.settimeout(35)
+s.connect(path)
+s.sendall(line.encode())
+data = b""
+while True:
+    chunk = s.recv(65536)
+    if not chunk:
+        break
+    data += chunk
+    if b"\n" in data:
+        break
+sys.stdout.write(data.decode("utf-8", "replace"))
+PY

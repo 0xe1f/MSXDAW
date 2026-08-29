@@ -15,7 +15,9 @@
 #   SNAP   snapshot file
 #   SNAPRANGE  RAM window per snapshot (default c000-dfff)
 #   DEDUP  0 = log every executed address (default 1)
-#   SOFTGL 0 = hardware OpenGL (default 1 = Apple software GL)
+#   COCOAMSX_ACCELERATED  0 = CPU drawRect present (default: GPU CALayer)
+#   COCOAMSX_SOCKET       control socket (default /tmp/cocoamsx.sock)
+#   COCOAMSX_CONFIG       JSON config path
 set -euo pipefail
 src="$(cd "$(dirname "$0")/../.." && pwd)"
 daw="$(cd "$src/.." && pwd)"
@@ -48,9 +50,7 @@ echo "app        $app"
 echo "rom        $rom"
 echo "trace log  $log   (exec='${EXEC:-}' watch='${WATCH:-}')"
 echo "snapshots  $snap  (F9 capture; range ${SNAPRANGE:-c000-dfff})"
-if [ "${SOFTGL:-1}" != "0" ]; then
-    export COCOAMSX_SOFTWARE_GL=1
-fi
+echo "socket     ${COCOAMSX_SOCKET:-/tmp/cocoamsx.sock}"
 export DISASM_TRACE=1
 export DISASM_DEDUP="${DEDUP:-1}"
 export DISASM_EXEC="${EXEC:-}"
@@ -58,4 +58,5 @@ export DISASM_WATCH="${WATCH:-}"
 export DISASM_LOG="$log"
 export DISASM_SNAP="$snap"
 export DISASM_SNAP_RANGE="${SNAPRANGE:-c000-dfff}"
+export COCOAMSX_SOCKET="${COCOAMSX_SOCKET:-/tmp/cocoamsx.sock}"
 exec "$app" "$rom"

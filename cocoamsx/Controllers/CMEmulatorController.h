@@ -86,9 +86,11 @@ NSString * const CMKeyboardLayoutPrefKey;
 - (CMMsxDisplayView *)screen;
 
 - (void)start;
+- (void)startWithState:(NSString *)state;
 - (void)stop;
 - (void)pause;
 - (void)resume;
+- (void)applyLiveConfig;
 
 - (BOOL)saveStateToFile:(NSString *)file;
 

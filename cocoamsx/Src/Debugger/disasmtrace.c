@@ -217,4 +217,125 @@ void disasmTraceWrite(UInt16 pc, UInt16 addr, UInt8 value)
     else         fprintf(dt_log, "W %02x:%04x %04x=%02x\n", seg & 0xff, pc, addr, value);
 }
 
+/* --- socket control -------------------------------------------------------- */
+#include <pthread.h>
+#include <errno.h>
+#include <time.h>
+
+static pthread_mutex_t dt_mu = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t  dt_cv = PTHREAD_COND_INITIALIZER;
+
+static int     dt_peekPending = 0;
+static UInt16  dt_peekAddr = 0;
+static UInt16  dt_peekLen = 0;
+static UInt8*  dt_peekOut = NULL;
+static int     dt_peekDone = 0;
+
+static int     dt_waitActive = 0;
+static UInt16  dt_waitAddr = 0;
+static UInt8   dt_waitValue = 0;
+static int     dt_waitDone = 0;
+
+static void dtEnsureLog(void)
+{
+    if (dt_log) return;
+    const char* env = getenv("DISASM_LOG");
+    dt_log = fopen(env && env[0] ? env : "/tmp/disasmtrace.log", "a");
+    if (dt_log) {
+        setvbuf(dt_log, NULL, _IOLBF, 0);
+        dt_on = 1;
+        dt_ready = 1;
+    }
+}
+
+void disasmTraceSetWatch(const char* ranges)
+{
+    dtEnsureLog();
+    dt_watchN = dtParseRanges(ranges, dt_watch, DT_MAX_RANGES);
+    if (dt_log)
+        fprintf(dt_log, "# watch ranges=%d (%s)\n", dt_watchN, ranges ? ranges : "");
+}
+
+void disasmTraceSetExec(const char* ranges)
+{
+    dtEnsureLog();
+    dt_execN = dtParseRanges(ranges, dt_exec, DT_MAX_RANGES);
+    if (dt_log)
+        fprintf(dt_log, "# exec ranges=%d (%s)\n", dt_execN, ranges ? ranges : "");
+}
+
+static int dtWaitMs(int timeoutMs)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    ts.tv_sec += timeoutMs / 1000;
+    ts.tv_nsec += (long)(timeoutMs % 1000) * 1000000L;
+    if (ts.tv_nsec >= 1000000000L) {
+        ts.tv_sec++;
+        ts.tv_nsec -= 1000000000L;
+    }
+    return pthread_cond_timedwait(&dt_cv, &dt_mu, &ts);
+}
+
+void disasmTraceService(void* ref, DisasmReadFn rd)
+{
+    if (!disasmTraceSnapPending && !dt_peekPending && !dt_waitActive)
+        return;
+    if (disasmTraceSnapPending)
+        disasmTraceDoSnapshot(ref, rd);
+
+    pthread_mutex_lock(&dt_mu);
+    if (dt_peekPending && rd && dt_peekOut) {
+        UInt16 i;
+        for (i = 0; i < dt_peekLen; i++)
+            dt_peekOut[i] = rd(ref, (UInt16)(dt_peekAddr + i));
+        dt_peekPending = 0;
+        dt_peekDone = 1;
+        pthread_cond_broadcast(&dt_cv);
+    }
+    if (dt_waitActive && rd) {
+        if (rd(ref, dt_waitAddr) == dt_waitValue) {
+            dt_waitActive = 0;
+            dt_waitDone = 1;
+            pthread_cond_broadcast(&dt_cv);
+        }
+    }
+    pthread_mutex_unlock(&dt_mu);
+}
+
+int disasmTracePeekRange(UInt16 addr, UInt16 len, UInt8* out, int timeoutMs)
+{
+    int rc;
+    if (out == NULL || len == 0) return -1;
+    pthread_mutex_lock(&dt_mu);
+    dt_peekAddr = addr;
+    dt_peekLen = len;
+    dt_peekOut = out;
+    dt_peekDone = 0;
+    dt_peekPending = 1;
+    rc = 0;
+    while (!dt_peekDone && rc == 0)
+        rc = dtWaitMs(timeoutMs > 0 ? timeoutMs : 2000);
+    dt_peekPending = 0;
+    dt_peekOut = NULL;
+    pthread_mutex_unlock(&dt_mu);
+    return dt_peekDone ? 0 : -1;
+}
+
+int disasmTraceWaitEquals(UInt16 addr, UInt8 value, int timeoutMs)
+{
+    int rc;
+    pthread_mutex_lock(&dt_mu);
+    dt_waitAddr = addr;
+    dt_waitValue = value;
+    dt_waitDone = 0;
+    dt_waitActive = 1;
+    rc = 0;
+    while (!dt_waitDone && rc == 0)
+        rc = dtWaitMs(timeoutMs > 0 ? timeoutMs : 30000);
+    dt_waitActive = 0;
+    pthread_mutex_unlock(&dt_mu);
+    return dt_waitDone ? 0 : -1;
+}
+
 #endif /* DISASMTRACE */

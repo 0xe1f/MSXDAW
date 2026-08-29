@@ -1,41 +1,35 @@
-CocoaMSX
-========
+# CocoaMSX (MSXDAW fork)
 
-**CocoaMSX** is an open source [MSX](http://en.wikipedia.org/wiki/MSX) emulator for OS X. 
+This is **not** upstream [CocoaMSX](https://github.com/CocoaMSX/CocoaMSX).
+It is a modified tree for **AI-guided tooling**: a live MSX display an agent
+can launch, seek, peek, and drive from a text socket, while a human still
+plays in the window.
 
-![Banner](http://i.imgur.com/9oarsE5.png "Screenshot")
+Based on CocoaMSX 1.61 / [blueMSX](http://www.bluemsx.com/). Keep the original
+copyright notices. Do not treat this binary as a general-purpose emulator
+UI — Preferences, Sparkle updates, video filters, and the old OpenGL present
+path are stripped or unhooked on purpose.
 
-Download
---------
+## What this fork adds
 
-[Version 1.61](https://github.com/CocoaMSX/CocoaMSX/releases/v1.61) is the latest stable release. [View all releases](https://github.com/CocoaMSX/CocoaMSX/releases).
+- Nearest-neighbor present (GPU CALayer by default; CPU `drawRect` fallback)
+- JSON config (`cocoamsx.json.example`) + SIGHUP / `reload-config`
+- Unix socket + `tools/disasm/cocoamsx-ctl` (peek, watch, snap, keys, savestate)
+- `DISASMTRACE` (F8/F9 RAM snapshots, EXEC/WATCH logs)
+- Window-focused AppKit keys only (no Input Monitoring)
 
-Features
---------
+Build, launch, and control: **[tools/disasm/README.md](tools/disasm/README.md)**.
+Agent skill: `msx-cocoamsx`. Further emulator changes are documented there and
+in that skill, not in a game repo’s `docs/`.
 
-* Based on [blueMSX](http://www.bluemsx.com/), one of the most accurate MSX emulators currently available
-* Built-in support for 3 virtual systems, automatic download and installation of over 200 MSX systems
-* Built-in support for cartridge (ROM) files, optional support for diskette (DSK) and cassette (CAS) files
-* Support for pasting text directly into MSX
-* Support for MSX-Music, MSX-Audio, Moonsound, SCC and PSG sound systems
-* Various video effects, such as scanlines and signal noise simulation
-* Snapshots with Finder previews
-* Support for MSX joysticks, joypads and mice
-* Flexible keyboard and input peripheral configuration
-* Screen capture
-* Audio capture
-* Gameplay capture
-* MSX Mouse support
-* Mixing for all six sound channels (PSG, SCC, MSX-Music, MSX-Audio, Moonsound, Keyboard)
-* Full screen support, including enhanced full screen on Lion and higher
-* Automatic updates
+```
+tools/disasm/build-cocoamsx.sh
+tools/disasm/trace-run.sh /path/to/game.rom
+tools/disasm/cocoamsx-ctl peek c425
+```
 
-System Requirements
--------------------
+Game ROMs, snapshot files, and logs stay in the **game** repo (`workbench.cfg`).
+Do not copy ROMs into this tree.
 
-Mac OS 10.7 or higher; versions [1.45](https://github.com/CocoaMSX/CocoaMSX/releases/v1.45) and older will also run on OS X 10.6.
-
-Support and Updates
--------------------
-
-CocoaMSX has a [dedicated wiki](https://github.com/CocoaMSX/CocoaMSX/wiki).
+Upstream project: [cocoamsx.com](http://www.cocoamsx.com) /
+[github.com/CocoaMSX/CocoaMSX](https://github.com/CocoaMSX/CocoaMSX).

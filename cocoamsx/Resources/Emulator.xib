@@ -43,14 +43,14 @@
                 <rect key="frame" x="0.0" y="0.0" width="640" height="512"/>
                 <autoresizingMask key="autoresizingMask"/>
                 <subviews>
-                    <openGLView colorSize="5bit_RGB_8bit_Alpha" depthSize="32bit" useAuxiliaryDepthBufferStencil="NO" useDoubleBufferingEnabled="YES" allowOffline="YES" useRecovery="YES" id="812" customClass="CMMsxDisplayView">
+                    <customView id="812" customClass="CMMsxDisplayView">
                         <rect key="frame" x="0.0" y="32" width="640" height="480"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <connections>
                             <outlet property="delegate" destination="-2" id="6aN-P0-Wpl"/>
                             <outlet property="emulator" destination="-2" id="1222"/>
                         </connections>
-                    </openGLView>
+                    </customView>
                     <box autoresizesSubviews="NO" title="Box" borderType="none" titlePosition="noTitle" id="1277">
                         <rect key="frame" x="0.0" y="0.0" width="640" height="32"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" flexibleMaxY="YES"/>

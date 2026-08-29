@@ -29,6 +29,8 @@
 		E99733721298B4B500766C90 /* DebugDeviceManager.c in Sources */ = {isa = PBXBuildFile; fileRef = E997313C1298B4B300766C90 /* DebugDeviceManager.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
 		E99733731298B4B500766C90 /* Debugger.c in Sources */ = {isa = PBXBuildFile; fileRef = E997313E1298B4B300766C90 /* Debugger.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
 		DA57ACE10000000000000002 /* disasmtrace.c in Sources */ = {isa = PBXBuildFile; fileRef = DA57ACE10000000000000001 /* disasmtrace.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
+		DA57ACE10000000000000012 /* CMConfig.m in Sources */ = {isa = PBXBuildFile; fileRef = DA57ACE10000000000000011 /* CMConfig.m */; };
+		DA57ACE10000000000000015 /* CMControlServer.m in Sources */ = {isa = PBXBuildFile; fileRef = DA57ACE10000000000000014 /* CMControlServer.m */; };
 		E99733741298B4B500766C90 /* Actions.c in Sources */ = {isa = PBXBuildFile; fileRef = E99731411298B4B300766C90 /* Actions.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
 		E99733751298B4B500766C90 /* AppConfig.c in Sources */ = {isa = PBXBuildFile; fileRef = E99731431298B4B300766C90 /* AppConfig.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
 		E99733761298B4B500766C90 /* CommandLine.c in Sources */ = {isa = PBXBuildFile; fileRef = E99731451298B4B300766C90 /* CommandLine.c */; settings = {COMPILER_FLAGS = "-Wno-incompatible-pointer-types -Wno-unused-variable -Wno-pointer-sign -Wno-switch -Wno-missing-declarations -Wno-varargs"; }; };
@@ -491,6 +493,10 @@
 		E997313E1298B4B300766C90 /* Debugger.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Debugger.c; sourceTree = "<group>"; };
 		DA57ACE10000000000000001 /* disasmtrace.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = disasmtrace.c; sourceTree = "<group>"; };
 		DA57ACE10000000000000003 /* disasmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = disasmtrace.h; sourceTree = "<group>"; };
+		DA57ACE10000000000000010 /* CMConfig.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CMConfig.h; sourceTree = "<group>"; };
+		DA57ACE10000000000000011 /* CMConfig.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CMConfig.m; sourceTree = "<group>"; };
+		DA57ACE10000000000000013 /* CMControlServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CMControlServer.h; sourceTree = "<group>"; };
+		DA57ACE10000000000000014 /* CMControlServer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CMControlServer.m; sourceTree = "<group>"; };
 		E997313F1298B4B300766C90 /* Debugger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Debugger.h; sourceTree = "<group>"; };
 		E99731411298B4B300766C90 /* Actions.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Actions.c; sourceTree = "<group>"; };
 		E99731421298B4B300766C90 /* Actions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Actions.h; sourceTree = "<group>"; };
@@ -2097,6 +2103,10 @@
 				FE81438F16F797CC000FABC7 /* CMGamepadManager.m */,
 				FE0C5F02192F344900FBE461 /* CMKeyboardManager.h */,
 				FE0C5F03192F344900FBE461 /* CMKeyboardManager.m */,
+				DA57ACE10000000000000010 /* CMConfig.h */,
+				DA57ACE10000000000000011 /* CMConfig.m */,
+				DA57ACE10000000000000013 /* CMControlServer.h */,
+				DA57ACE10000000000000014 /* CMControlServer.m */,
 				FE41ABA21930056800AB89FF /* CMKeyEventData.h */,
 				FE41ABA01930056100AB89FF /* CMKeyEventData.m */,
 			);
@@ -2468,6 +2478,8 @@
 				E99733721298B4B500766C90 /* DebugDeviceManager.c in Sources */,
 				E99733731298B4B500766C90 /* Debugger.c in Sources */,
 				DA57ACE10000000000000002 /* disasmtrace.c in Sources */,
+				DA57ACE10000000000000012 /* CMConfig.m in Sources */,
+				DA57ACE10000000000000015 /* CMControlServer.m in Sources */,
 				E99733741298B4B500766C90 /* Actions.c in Sources */,
 				FEE02D94193C3F4C004585C1 /* romMapperSvi328RsIDE.c in Sources */,
 				E99733751298B4B500766C90 /* AppConfig.c in Sources */,

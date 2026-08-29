@@ -142,10 +142,14 @@
     
     [[textScrollView documentView] scrollPoint:NSMakePoint(0.0, newAmount)];
     
+    CGFloat visibleHeight = [textScrollView bounds].size.height;
     CGFloat contentHeight = [[textScrollView documentView] bounds].size.height;
-    CGFloat contentPosition = newAmount + [textScrollView bounds].size.height;
+    CGFloat contentPosition = newAmount + visibleHeight;
     
-    if (contentPosition >= contentHeight)
+    // Wrap only after scrolling past taller content. Resetting to 0 from
+    // restart/continue used to recurse until the stack died: on current
+    // AppKit the document height still equals the clip view (minSize 225).
+    if (newAmount > 0.0 && contentHeight > visibleHeight && contentPosition >= contentHeight)
         [self continueScrolling];
     
     // Find where the scrollview’s bounds are, then convert to panel’s coordinates

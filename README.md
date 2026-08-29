@@ -16,7 +16,7 @@ submodule `tools/workbench`.
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
 | `bin/scaffold` | New game repo |
 | `bin/add-skill` / `bin/install-skills` | Skills + `~/.cursor/skills` symlinks |
-| `cocoamsx/` | Instrumented CocoaMSX fork (`-DDISASMTRACE`) |
+| `cocoamsx/` | Research display: CALayer present, JSON config, control socket (`tools/disasm/`, skill `msx-cocoamsx`) |
 | `skills/` | Generic agent skills (no ROM-specific addresses) |
 | `scaffold/` | Templates copied by `bin/scaffold` |
 
@@ -38,6 +38,11 @@ one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo.
 bin/install-skills    # symlink skills/* -> ~/.cursor/skills/
 bin/add-skill NAME    # create skills/NAME + install
 ```
+
+Agents follow `skills/` (and this repo’s `AGENTS.md`) in addition to a game’s
+`.agents/skills/`. Record workbench / CocoaMSX changes in **this** tree, not
+in a game’s `docs/progress.md`. CocoaMSX research-display notes:
+`cocoamsx/tools/disasm/README.md` and skill `msx-cocoamsx`.
 
 ## License
 

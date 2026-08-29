@@ -1,0 +1,11 @@
+{
+  "machine": "MSX2 - C-BIOS",
+  "volume": 75,
+  "scale": 2,
+  "accelerated": true,
+  "vdp_sync": "60hz",
+  "speed": 100,
+  "socket": "/tmp/cocoamsx.sock",
+  "snap_range": "c000-dfff",
+  "keymap": {}
+}

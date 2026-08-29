@@ -21,7 +21,6 @@
                 <outlet property="recentDisksB" destination="LBN-MK-euB" id="nyL-VS-h9w"/>
             </connections>
         </customObject>
-        <customObject id="797" customClass="SUUpdater"/>
         <menu title="Main Menu" systemMenu="main" id="29">
             <items>
                 <menuItem title="CocoaMSX" id="56">
@@ -32,18 +31,6 @@
                                 <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="openAbout:" target="-1" id="gO6-f9-Cmc"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem title="Check for Updates..." id="1274">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <connections>
-                                    <action selector="checkForUpdates:" target="797" id="4Uw-ZD-jdi"/>
-                                </connections>
-                            </menuItem>
-                            <menuItem isSeparatorItem="YES" id="236"/>
-                            <menuItem title="Preferences…" keyEquivalent="," id="129">
-                                <connections>
-                                    <action selector="openPreferences:" target="-1" id="9dY-u6-BwH"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="143"/>

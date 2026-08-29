@@ -66,7 +66,7 @@ void disasmTraceRequestSnapshot(void);
 extern int disasmTraceSnapPending;
 void disasmTraceDoSnapshot(void* ref, DisasmReadFn rd);
 #define disasmTraceSnapshotIfPending(ref, rd) \
-    do { if (disasmTraceSnapPending) disasmTraceDoSnapshot((ref), (rd)); } while (0)
+    do { disasmTraceService((ref), (rd)); } while (0)
 
 /* Auto-snapshot: a UI hotkey toggles periodic captures (one every N rendered
    frames, N = DISASM_SNAP_EVERY, default 1).  disasmTraceAutoSnapTick() is
@@ -75,6 +75,14 @@ void disasmTraceDoSnapshot(void* ref, DisasmReadFn rd);
 void disasmTraceToggleAutoSnap(void);
 int  disasmTraceAutoSnapActive(void);
 void disasmTraceAutoSnapTick(void);
+
+/* Runtime (socket) control. Ranges use the same "lo-hi,lo,..." hex grammar as
+   DISASM_WATCH / DISASM_EXEC. Peek/wait complete at the next opcode fetch. */
+void disasmTraceSetWatch(const char* ranges);
+void disasmTraceSetExec(const char* ranges);
+int  disasmTracePeekRange(UInt16 addr, UInt16 len, UInt8* out, int timeoutMs);
+int  disasmTraceWaitEquals(UInt16 addr, UInt8 value, int timeoutMs);
+void disasmTraceService(void* ref, DisasmReadFn rd);
 
 #else /* !DISASMTRACE : compile to nothing */
 
@@ -86,6 +94,11 @@ void disasmTraceAutoSnapTick(void);
 #define disasmTraceToggleAutoSnap()            ((void)0)
 #define disasmTraceAutoSnapActive()            (0)
 #define disasmTraceAutoSnapTick()              ((void)0)
+#define disasmTraceSetWatch(r)                 ((void)0)
+#define disasmTraceSetExec(r)                  ((void)0)
+#define disasmTracePeekRange(a,l,o,t)          (-1)
+#define disasmTraceWaitEquals(a,v,t)           (-1)
+#define disasmTraceService(ref, rd)            ((void)0)
 
 #endif /* DISASMTRACE */
 

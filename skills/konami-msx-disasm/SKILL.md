@@ -21,7 +21,10 @@ banks, or dumpers, keep it in the game. No ROM-specific addresses in DAW skills.
 
 ## Non-negotiables
 
-- Byte-exact round-trip (`make verify` vs committed `<Game>.sha1`).
+- **Byte-exact round-trip at every step.** The build must reproduce the original
+  ROM byte-for-byte (`make verify` checks SHA-1 against a committed
+  `<Game>.sha1`). Run it after every edit. Never commit a change that breaks it.
+  An original ROM dump is not required to assemble or verify.
 - No binaries in the final repo (goal). 8 KiB banks start as `INCBIN` and
   graduate to annotated `.asm`. Don’t mass-convert bins to opaque `db`.
 - Assembler = sjasmplus, disassembler = z80dasm.
@@ -83,4 +86,5 @@ render both. Watch the RAM the feature is supposed to fill.
 ## Cost
 
 Reuse `regen-bank.sh` and `romscan.py`. Don’t grep leftover `.bin` or write
-ad-hoc xref python. Runtime tracing: `msx-trace` (CocoaMSX in this workbench).
+ad-hoc xref python. Runtime tracing: `msx-cocoamsx`. Early code/data split
+(`.blocks`, bank roles, illegal-sequence seeds): `msx-code-data`.
