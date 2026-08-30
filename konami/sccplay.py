@@ -59,6 +59,9 @@ MIX_PSG = (
 )
 TEMPLATE = bytes([0x01]) + bytes(0x2D)  # +4 duration=1, then zeros (0x2E bytes)
 SCC_HZ = PSG_HZ * 2  # 3.579545 MHz
+# blueMSX SCC.c: step = (1<<28)*3579545/32/sr / (1+period); index = phase>>23.
+# Cycle freq = SCC_HZ / (32 * (period + 1)). Volume is linear 4-bit, not AY log.
+SCC_VOL = 4  # 127*15*4 ≈ half an AY channel; 5 SCC + 3 AY can sum without slamming
 
 
 class SCC:
@@ -67,12 +70,12 @@ class SCC:
     def __init__(self, sample_rate: int):
         self.sr = sample_rate
         self.wave = [bytearray(32) for _ in range(4)]
-        self.period = [1] * 5
+        self.period = [0] * 5
         self.vol = [0] * 5
         self.enable = 0
-        self.pos = [0] * 5
         self.phase = [0.0] * 5
-        self.step = SCC_HZ / sample_rate
+        # wavetable steps per output sample at period+1 == 1
+        self.step = SCC_HZ / (32.0 * sample_rate)
 
     def sample(self) -> int:
         acc = 0
@@ -80,16 +83,16 @@ class SCC:
             if not (self.enable & (1 << ch)):
                 continue
             v = self.vol[ch] & 0x0F
-            if v == 0:
+            p = self.period[ch]
+            if p == 0:
                 continue
-            p = self.period[ch] or 1
-            self.phase[ch] += self.step / p
+            # phase in cycles; 32 samples per cycle
+            self.phase[ch] += self.step / (p + 1)
             wch = 3 if ch == 4 else ch
-            s = self.wave[wch][int(self.phase[ch]) & 31]
+            s = self.wave[wch][int(self.phase[ch] * 32.0) & 31]
             if s >= 128:
                 s -= 256
-            acc += s * AY_VOL[v]
-        acc //= 128 * 4
+            acc += s * v * SCC_VOL
         if acc > 32767:
             return 32767
         if acc < -32768:
@@ -928,7 +931,7 @@ class Driver:
         enable = 0
         for i, base in enumerate((0xE099, 0xE0CC, 0xE0FF, 0xE132, 0xE165)):
             p = self.chb(base, 0x0A) | ((self.chb(base, 0x0B) & 0x0F) << 8)
-            self.scc.period[i] = p or 1
+            self.scc.period[i] = p
             self.scc.vol[i] = self.chb(base, 0x0C) & 0x0F
             if self.chb(base, 0x0D):
                 enable |= 1 << i
