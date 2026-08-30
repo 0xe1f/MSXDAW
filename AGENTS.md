@@ -5,8 +5,9 @@ MSX Disassembly Workbench. Game repos vendor this tree as `tools/workbench`.
 **Placement:** generic MSX / shared Konami formats → this repo. ROM-specific
 stems, RAM maps, bank windows, dumpers → the game’s `tools/` and `.agents/skills/`.
 
-**Banks, not segments.** One `banks/bankNN.asm` per 8 KiB mapper unit unless this
-cart’s mapper schedule justifies a window file.
+**Banks, not segments.** Scaffold is one `banks/bankNN.asm` per 8 KiB. Once
+paging helpers show which banks are mapped together, combine those into one
+window file (`konami-msx-disasm`).
 
 **Byte-exact round-trip.** Game repos run `make verify` after every edit against
 a committed `<Game>.sha1`. Never commit a break. An original ROM dump is not

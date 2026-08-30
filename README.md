@@ -22,9 +22,11 @@ submodule `tools/workbench`.
 
 ## Vocabulary
 
-- **Bank** — 8 KiB mapper unit. Default source split: one `banks/bankNN.asm`.
+- **Bank** — 8 KiB mapper unit. Scaffold: one `banks/bankNN.asm`. After the
+  pager is known, contiguous banks become one window file (`konami-msx-disasm`).
 - **CPU page** — 16 KiB MSX slot page.
-- **Window file** — optional later merge of banks this game always maps together.
+- **Window file** — one `.asm` + matching `.blocks` for banks this cart maps
+  together (triplet, pair, …). Stem `banks_` + concatenated hex ids.
 - **Segment** — do not use in new text (collides with z80dasm / sjasmplus).
 
 ## Placement

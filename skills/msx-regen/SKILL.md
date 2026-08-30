@@ -16,12 +16,15 @@ disassembler.
 ## Regen one bank
 
 ```
-tools/workbench/msx/regen-bank.sh <n> [origin-hex] [banks/bankNN.blocks]
+tools/workbench/msx/regen-bank.sh <n> [origin-hex] [banks/banks_<stem>.blocks]
 ```
 
 `<n>` is the 8 KiB bank index (0-based). Origin defaults to `workbench.cfg`
-`bank_org`. Optional `.blocks` marks code vs data (rendering only). How to
-seed it: `msx-code-data`. Do not regen until `bank_org` matches the pager.
+`bank_org`. Optional `.blocks` marks code vs data (rendering only). After
+windows exist, pass that window’s `.blocks` for every slice in the group
+(the script keeps blocks whose **start** is in this 8 KiB). How to seed it:
+`msx-code-data`. Window merge: `konami-msx-disasm`. Do not regen until
+`bank_org` matches the pager.
 
 Writes gitignored scratch:
 
@@ -37,18 +40,19 @@ Never copy the generated file over annotated source. Never commit z80dasm
    master’s `PHASE` (`msx-code-data`). Do not z80dasm gfx / packed-PSG /
    table-only payload — those stay `INCBIN` until the consumer is named,
    then labelled `.asm` (`msx-code-data` peel).
-2. `regen-bank.sh N [origin] [banks/bankNN.blocks]`
+2. `regen-bank.sh N [origin] [banks/banks_<stem>.blocks]` (or `bankNN.blocks`
+   before windows exist).
 3. Grep `generated/<prefix>NN.raw.asm` for `;illegal sequence`.
-4. Prepend a bank header; copy the **generated** file (not raw) to
-   `banks/bankNN.asm`. Drop z80dasm’s `equ` lines (those symbols live in
-   other banks or `bios.inc`). Master: `INCBIN` → `INCLUDE`.
+4. Prepend a header; copy the **generated** file (not raw) into the window
+   `.asm` (or `banks/bankNN.asm` if that 8 KiB is still alone). Drop
+   z80dasm’s `equ` lines (those symbols live in other banks or `bios.inc`).
+   Master: `INCBIN` → `INCLUDE`.
 5. BIOS-lie audit on non-`call`/`jp`/`jr` lines. `make verify`, then
    `make banks` (drops the leftover `.bin`).
-6. Two banks in the same CPU window (`bank_org` repeat) cannot share
-   z80dasm `lXXXXh` / `sub_XXXXh` names. Wrap the INCLUDE in
-   `MODULE bankNN` / `ENDMODULE`, or prefix auto labels. Do not put
-   those addresses in `msx.sym` (the next bank in that window would
-   steal the name).
+6. Two **windows** that share a CPU range cannot share z80dasm `lXXXXh` /
+   `sub_XXXXh` names. Wrap later windows in one `MODULE` / `ENDMODULE`, or
+   prefix auto labels. Do not put those addresses in `msx.sym`. Combining
+   contiguous banks: `konami-msx-disasm`.
 
 ## Symbols (`msx.sym` is flat, the ROM is banked)
 

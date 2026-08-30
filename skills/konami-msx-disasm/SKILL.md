@@ -33,15 +33,45 @@ banks, or dumpers, keep it in the game. No ROM-specific addresses in DAW skills.
 
 ## Bank vs segment
 
-- **Bank** — 8 KiB mapper unit. Default: one `banks/bankNN.asm`.
+- **Bank** — 8 KiB mapper unit.
 - **CPU page** — 16 KiB MSX slot page.
-- **Window file** — optional merge after *this* cart’s mapper schedule is known.
+- **Window file** — one `.asm` (and matching `.blocks`) for every set of
+  banks this cart maps together. See below.
 - Do not say **segment** in new text.
 
 Mapper first: size, bank count, switch addresses, which pages are switchable.
 Konami4: typically `6000`/`8000`/`A000` (page `4000-5FFF` often fixed). Konami
 SCC: `5000`/`7000`/`9000`/`B000`; SCC at `9800` after `3F` → `9000`. Document
 it at the top of `<Game>.asm`. Do not copy another game’s window grouping.
+
+## Window files (combine contiguous banks)
+
+Bootstrap is one `banks/bankNN.asm` per 8 KiB (`msx-bootstrap`). That split is
+scaffold. Once paging helpers are named (`page_triplet` / pair / A000-only
+wrappers → `bank_org`), **merge every set of banks that helper maps as
+consecutive mapper ids into consecutive CPU pages** into one window file,
+one `PHASE` covering the whole range.
+
+A Konami triplet `ld a,N / write / inc a / write / inc a / write` into
+6000/8000/A000 is one window (banks N, N+1, N+2). An 8000+A000 pair is one
+window. A bank that is *also* switched A000-only still lives in its triplet
+file. Do **not** merge two pagers just because they reuse the same CPU
+addresses at different times — that is a `MODULE`, not one file. Bank 0 stays
+its own window when page 4000–5FFF is never remapped.
+
+Stem: `banks_` + concatenated **unpadded hex** ids in CPU order
+(`banks_123`, `banks_9a`, `banks_bcd`, `banks_ef`). Same stem for
+`banks_<stem>.asm` and `banks_<stem>.blocks`. Section the `.blocks` file per
+8 KiB (`; bank 1 @ 0x6000`); `regen-bank.sh` keeps only blocks whose **start**
+falls in the slice being disassembled (`msx-regen`, `msx-code-data`).
+
+Later windows that occupy a CPU range already used by an earlier window wrap
+the INCLUDE in one `MODULE` (not one MODULE per 8 KiB) so z80dasm `lXXXXh`
+names do not collide. The first window in that range can stay global. Do not
+put those overlapping addresses in `msx.sym`.
+
+Fold generated 8 KiB listings into the window file by hand; `make verify`.
+`.blocks` / peel: `msx-code-data`.
 
 ## Conventions
 

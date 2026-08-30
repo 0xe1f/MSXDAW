@@ -15,4 +15,6 @@ An original ROM dump is not required to assemble or verify.
 **End state.** Every ROM byte is labelled `.asm`. Leftover `INCBIN` is scaffold
 only (`msx-code-data`).
 
-Default source split is **one file per 8 KiB mapper bank** (`banks/bank00.asm`). Do not invent paging-window files until this cart’s mapper schedule is known. Say **bank**, not segment.
+Default source split is **one file per 8 KiB mapper bank** (`banks/bank00.asm`)
+until paging helpers are named. Then combine banks this cart maps together
+into one window file per group (`konami-msx-disasm`). Say **bank**, not segment.

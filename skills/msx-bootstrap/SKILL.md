@@ -16,6 +16,8 @@ description: >-
    `make verify` after the fold. Never leave it red.
 5. Stop. Do not invent window files, actor maps, or level formats yet.
    Next session is `msx-code-data` (paging helpers → `bank_org` → `.blocks`).
+   After those helpers are named, merge contiguous banks into window files
+   (`konami-msx-disasm`).
 
 Konami SCC: switch regs `5000`/`7000`/`9000`/`B000`; page `4000-5FFF` is
 switchable; SCC appears at `9800` after `3F` → `9000`. Konami4 is different —

@@ -4,9 +4,9 @@ description: >-
   Split code from data early in a banked Z80 MSX disassembly: .blocks maps,
   bank classification, inline DISPATCH_A tables, illegal-sequence seeds,
   peeling identified blobs into banks/data. Use after msx-bootstrap on a
-  new cart, when writing banks/*.blocks, converting fake instructions to
-  defb/defw, asking what is code vs data, or moving tables/gfx out of a
-  bank file.
+  new cart, when writing banks/*.blocks or window banks_*.blocks, converting
+  fake instructions to defb/defw, asking what is code vs data, or moving
+  tables/gfx out of a bank file.
 ---
 
 # Split code vs data
@@ -21,7 +21,9 @@ changes rendering, never bytes. Naming: `konami-msx-disasm`. Regen: `msx-regen`.
 `msx-bootstrap` named bank 0 boot (header, init, `H.TIMI`, switchers). Next:
 
 1. Decode paging helpers. Those writes are the ground truth for what each
-   other 8 KiB bank **is** (play code, tileset, map, title gfx, sound).
+   other 8 KiB bank **is** (play code, tileset, map, title gfx, sound) and
+   which banks are mapped **together**. Combine those into window files
+   (`konami-msx-disasm`); do not leave a known triplet as three `bankNN.asm`.
 2. Entropy / opcode histogram is a hint (`0xCD`/`0xC3`/`0xDD` vs
    low-entropy zero-heavy 4bpp). Mixed banks exist — do not call a map or
    PSG-driver bank “graphics” from entropy alone.
@@ -37,9 +39,12 @@ Do not disassemble a tileset or RLE bank as code.
 
 ## `.blocks`
 
-One file per bank (`banks/bankNN.blocks`) or per window file. `regen-bank.sh`
-keeps only blocks whose **start** falls in the 8 KiB being disassembled.
+One file per **window**, same stem as the `.asm` (`banks/banks_123.blocks`).
+Until windows exist, one file per 8 KiB (`banks/bank00.blocks`) is fine.
+`regen-bank.sh` keeps only blocks whose **start** falls in the 8 KiB being
+disassembled — pass the window `.blocks` for every slice in that window.
 Names must not collide with in-source labels (z80dasm emits `NAME_start`).
+Section the file per 8 KiB (`; bank 1 @ 0x6000`).
 
 ```
 rom_header: start 0x4000 end 0x4010 type bytedata
