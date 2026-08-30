@@ -25,8 +25,9 @@ tools/disasm/snapdiff.py generated/disasmsnap.bin
 
 GPU CALayer `contents` (nearest) by default. `COCOAMSX_ACCELERATED=0` or JSON
 `"accelerated": false` falls back to a CPU `drawRect:` blit. Both share the
-FAST framebuffer. Do **not** restore `glBegin` OpenGL / `COCOAMSX_SOFTWARE_GL`
-— that path crashes in Apple’s Metal GL shim.
+FAST framebuffer (row 0 = top). CPU `drawRect` must **not** extra Y-flip
+that buffer; CALayer `contents` already matches. Do **not** restore `glBegin`
+OpenGL / `COCOAMSX_SOFTWARE_GL` — that path crashes in Apple’s Metal GL shim.
 
 VDP is pinned NTSC 60 Hz (`P_VDP_SYNC60HZ`). `VIDEO_PAL_FAST` is blueMSX’s
 no-filter blit name, not 50 Hz PAL.
@@ -36,6 +37,10 @@ no-filter blit name, not 50 Hz PAL.
 Keys are window-focused AppKit events (`keyDown` / `injectKeyCode:`). No
 IOHID keyboard monitor, no Input Monitoring permission. F8/F9 live on the
 display view’s responder chain. Gamepad HID can still open.
+
+Do not restore `NSApplicationPresentationDisableProcessSwitching` on key
+window (upstream kiosk leftover). It blocked Mission Control / Spaces
+while the emulator had focus.
 
 ## Config
 

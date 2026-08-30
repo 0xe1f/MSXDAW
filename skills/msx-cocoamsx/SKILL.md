@@ -144,9 +144,12 @@ line out (`ok …` / `err …`).
   `screenshot` without peeking.
 - zsh: quote `wait` (`cocoamsx-ctl wait 'c000' '==' '02'`). `==` is special.
 - Do not restore `glBegin` OpenGL / `COCOAMSX_SOFTWARE_GL` — crashes in
-  Apple’s Metal GL shim. `accelerated: false` is the CPU `drawRect` fallback.
+  Apple’s Metal GL shim. `accelerated: false` is the CPU `drawRect` fallback;
+  that blit must not extra Y-flip (FAST buffer is already top-down).
 - About’s credits scroller used to recurse until SIGSEGV (document-height
   wrap). Fixed in `CMAboutController`; rebuild if a binary still dies on About.
+- Do not restore `NSApplicationPresentationDisableProcessSwitching` on
+  key window — it blocked Spaces / Mission Control while focused.
 - Prefs / Sparkle / hq2x stay in the Xcode target (unhooked, not deleted).
 
 Emulator how-to lives in this skill and `cocoamsx/tools/disasm/README.md`.

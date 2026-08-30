@@ -340,8 +340,7 @@ void disasmTraceAutoSnapTick(void);
     if (ctx) {
         CGContextSaveGState(ctx);
         CGContextSetInterpolationQuality(ctx, kCGInterpolationNone);
-        CGContextTranslateCTM(ctx, 0, bounds.size.height);
-        CGContextScaleCTM(ctx, 1, -1);
+        /* Unflipped NSView: CGImage row 0 is the top of the FAST buffer. */
         CGContextDrawImage(ctx, NSRectToCGRect(bounds), img);
         CGContextRestoreGState(ctx);
     }

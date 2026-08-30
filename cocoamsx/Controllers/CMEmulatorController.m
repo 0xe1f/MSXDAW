@@ -149,7 +149,6 @@
 - (NSWindow *)activeWindow;
 - (void)enterLegacyFullscreen;
 - (void)exitLegacyFullscreen;
-- (void) togglePresentationOptions;
 
 - (BOOL)isStatusBarVisible;
 - (void)setIsStatusBarVisible:(BOOL)isVisible;
@@ -3011,38 +3010,11 @@ void archTrap(UInt8 value)
 - (void)windowDidBecomeKey:(NSNotification *)notification
 {
     [self windowKeyDidChange:YES];
-	
-	[self togglePresentationOptions];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification
 {
     [self windowKeyDidChange:NO];
-	
-	[self togglePresentationOptions];
-}
-
-- (void) togglePresentationOptions
-{
-	NSApplicationPresentationOptions options = [NSApp presentationOptions];
-	if (!(options & NSApplicationPresentationAutoHideDock) && !(options & NSApplicationPresentationHideDock)) {
-		options |= NSApplicationPresentationAutoHideDock;
-	}
-	
-	if ([[self window] isKeyWindow]) {
-		options |= NSApplicationPresentationDisableProcessSwitching;
-		NSLog(@"EmulatorController: disabling process switching");
-	} else {
-		options &= ~NSApplicationPresentationDisableProcessSwitching;
-		NSLog(@"EmulatorController: enabling process switching");
-	}
-	
-	@try {
-		[NSApp setPresentationOptions:options];
-	}
-	@catch(NSException * exception) {
-		NSLog(@"[NSApp setPresentationOptions] failed");
-	}
 }
 
 - (void)windowWillEnterFullScreen:(NSNotification *)notification
