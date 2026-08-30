@@ -1,12 +1,13 @@
 ---
 name: msx-psg-catalogue
 description: >-
-  Build labelled WAV catalogues for Konami packed-PSG BGM and SFX. Preview
-  only; labelled .asm stays authoritative (make verify). Use when adding
-  make music / make sfx, dumping tracks, or wrapping a game-specific player.
+  Build labelled WAV catalogues for MSX PSG BGM and SFX (Konami packed-PSG
+  or Taito psg_play). Preview only; labelled .asm stays authoritative
+  (make verify). Use when adding make music / make sfx, dumping tracks, or
+  wrapping a game-specific player.
 ---
 
-# MSX packed-PSG catalogues (guidelines)
+# MSX PSG catalogues (guidelines)
 
 WAV is preview only. Compressed / labelled `.asm` bytes stay authoritative
 (`make verify`). Implement the wrapper in the **game** repo (`tools/psgplay.py`
@@ -16,9 +17,11 @@ WAV is preview only. Compressed / labelled `.asm` bytes stay authoritative
 |--------|--------|----------------|
 | 6-byte music-rec (Vampire Killer `sound_tick`) | `konami/psgplay.py` | 3 PSG channels |
 | 18-byte packed header, 8 slots (King's Valley II) | `konami/sccplay.py` | 3 PSG + 5 SCC |
+| 5-byte rec + 2 slots (Taito `psg_play` / `psg_tick`) | `msx/taitoplay.py` | 2 PSG slots |
 
-Do not point the VK player at an 18-byte header table. Catalogue **names** and
-default output dirs stay in the game wrapper. No extra audio libraries.
+Do not point the VK player at an 18-byte header table, or either Konami
+player at Taito `psg_play` streams. Catalogue **names** and default output
+dirs stay in the game wrapper. No extra audio libraries.
 
 ## Directories
 
@@ -39,4 +42,5 @@ once you re-run the target. WAVs are tracked so they are audible without a
 rebuild, like `gfx/` PNGs.
 
 Hard caps (fade heuristics, loop counts) live on the player CLI; the game
-wrapper supplies per-cart `--map` / table addresses / id lists.
+wrapper supplies per-cart `--map` / table addresses / id lists (Taito:
+id lists only, linear ROM).

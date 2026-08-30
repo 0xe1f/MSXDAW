@@ -23,7 +23,8 @@ stale workbench links after a rename or delete. Never `~/.cursor/skills`.
 Agents in a game repo must follow `tools/workbench/skills/` in addition to
 the game’s `.agents/skills/`. Run `bin/install-skills` after pulling
 workbench when skills were added or removed. WAV catalogues (`make music` /
-`make sfx`) follow `msx-psg-catalogue`; the renderer is `konami-psg`.
+`make sfx`) follow `msx-psg-catalogue`. Konami renderers are `konami-psg`;
+Taito `psg_play` is `msx/taitoplay.py`.
 
 **Docs:** record changes to this tree (tools, skills, `cocoamsx/`) **here** —
 this file, `README.md`, `skills/<name>/SKILL.md`, and the tool’s own README

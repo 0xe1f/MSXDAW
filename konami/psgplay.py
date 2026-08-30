@@ -131,8 +131,9 @@ class AY:
     ENV_MASK = 0x0F
     ENV_MUL = 2  # AY: period * 2 vs YM2149's 32-step /1
 
-    def __init__(self, sample_rate: int):
+    def __init__(self, sample_rate: int, mix_div: int = 4):
         self.sr = sample_rate
+        self.mix_div = mix_div if mix_div else 4
         self.reg = [0] * 16
         self.tone_cnt = [0, 0, 0]
         self.tone_bit = [0, 0, 0]
@@ -236,7 +237,7 @@ class AY:
             amp = self.reg[8 + ch]
             vol = self.env_vol if (amp & 0x10) else (amp & 0x0F)
             acc += AY_VOL[vol]
-        acc //= 4
+        acc //= self.mix_div
         if acc > 32767:
             acc = 32767
         return acc

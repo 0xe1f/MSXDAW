@@ -12,7 +12,10 @@ AY-3-8910 timing (fmaster/8). Recognizable, not analog-accurate. Catalogue
 names and default output dirs stay in the **game** `tools/psgplay.py`
 (`msx-psg-catalogue`).
 
-Two in-house drivers; pick the player that matches the header:
+Taito carts (`psg_play` / 5-byte records / two slots) use
+`msx/taitoplay.py`, not these players.
+
+Two in-house Konami drivers; pick the player that matches the header:
 
 ## 6-byte music-rec (Vampire Killer)
 

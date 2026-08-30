@@ -10,7 +10,7 @@ submodule `tools/workbench`.
 
 | Path | What |
 |---|---|
-| `msx/` | Mapper-agnostic: regen, romscan, split-rom, gfxview, pngwrite |
+| `msx/` | Mapper-agnostic: regen, romscan, split-rom, gfxview, pngwrite, Taito PSG (`taitoplay.py`) |
 | `konami/` | Konami VRAM RLE, packed-PSG (`psgplay.py` / `sccplay.py`) |
 | `lib/game.py` | Find the game root (`workbench.cfg`) |
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
