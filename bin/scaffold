@@ -16,26 +16,47 @@
 # Scaffold a new MSXDAW game repo.
 #
 #   scaffold <dest-dir> --name KingsValley2 --mapper konami-scc [--rom path]
+# Probe the ROM first (bin/probe). Pass --mapper / --banks from that report.
+# 16/32 KiB unmapped carts: --mapper linear --banks 4 (or 2).
 set -euo pipefail
 DAW="$(cd "$(dirname "$0")/.." && pwd)"
 
 dest=""
 name=""
-mapper="konami4"
+mapper=""
 rom=""
-banks=16
+banks=""
+url_flag=""
+banks_explicit=0
+mapper_explicit=0
 while [ $# -gt 0 ]; do
   case "$1" in
     --name) name="$2"; shift 2 ;;
-    --mapper) mapper="$2"; shift 2 ;;
+    --mapper) mapper="$2"; mapper_explicit=1; shift 2 ;;
     --rom) rom="$2"; shift 2 ;;
-    --banks) banks="$2"; shift 2 ;;
+    --banks) banks="$2"; banks_explicit=1; shift 2 ;;
+    --url) url_flag="$2"; shift 2 ;;
     -*) echo "unknown flag $1" >&2; exit 2 ;;
     *) dest="$1"; shift ;;
   esac
 done
-[ -n "$dest" ] || { echo "usage: scaffold <dir> --name Game [--mapper konami-scc] [--rom file]" >&2; exit 2; }
+[ -n "$dest" ] || { echo "usage: scaffold <dir> --name Game [--mapper linear|konami-scc|konami4|ascii8] [--banks N] [--rom file] [--url git-url]" >&2; exit 2; }
 [ -n "$name" ] || name="$(basename "$dest")"
+
+if [ -n "$rom" ] && [ -f "$rom" ] && [ "$banks_explicit" -eq 0 ]; then
+  sz=$(wc -c < "$rom" | tr -d ' ')
+  banks=$((sz / 8192))
+  [ "$banks" -gt 0 ] || banks=1
+fi
+[ -n "$banks" ] || banks=16
+if [ "$mapper_explicit" -eq 0 ]; then
+  if [ "$banks" -le 4 ]; then
+    mapper="linear"
+  else
+    mapper="konami4"
+  fi
+fi
+[ -n "$mapper" ] || mapper="konami4"
 
 mkdir -p "$dest"
 dest="$(cd "$dest" && pwd)"
@@ -44,13 +65,16 @@ if [ ! -d "$dest/.git" ]; then
   git -C "$dest" init -q
 fi
 
-# Submodule: prefer relative path if dest is a sibling of DAW.
+# Submodule: --url wins; else relative if dest is a sibling of a standalone
+# DAW clone; else GitHub (never a nested tools/workbench working copy).
 daw_parent="$(cd "$DAW/.." && pwd)"
 dest_parent="$(cd "$dest/.." && pwd)"
-if [ "$daw_parent" = "$dest_parent" ]; then
+if [ -n "$url_flag" ]; then
+  url="$url_flag"
+elif [ "$daw_parent" = "$dest_parent" ]; then
   url="../$(basename "$DAW")"
 else
-  url="$DAW"
+  url="git@github.com:0xe1f/MSXDAW.git"
 fi
 mkdir -p "$dest/tools"
 if [ ! -e "$dest/tools/workbench" ]; then
@@ -59,6 +83,27 @@ fi
 
 mkdir -p "$dest/banks" "$dest/docs" "$dest/.agents/skills" "$dest/generated"
 touch "$dest/.agents/skills/.gitkeep"
+
+orgs=""
+i=0
+while [ "$i" -lt "$banks" ]; do
+  case $((i % 4)) in
+    0) o=4000 ;;
+    1) o=6000 ;;
+    2) o=8000 ;;
+    3) o=A000 ;;
+  esac
+  if [ -n "$orgs" ]; then orgs="${orgs},"; fi
+  orgs="${orgs}${o}"
+  i=$((i + 1))
+done
+scan=""
+i=0
+while [ "$i" -lt "$banks" ] && [ "$i" -lt 4 ]; do
+  if [ -n "$scan" ]; then scan="${scan},"; fi
+  scan="${scan}${i}"
+  i=$((i + 1))
+done
 
 cat > "$dest/workbench.cfg" <<EOF
 name = ${name}
@@ -70,7 +115,8 @@ bank_size = 8192
 source_dir = banks
 bank_prefix = bank
 sym = banks/msx.sym
-scan_banks = 0,1,2,3
+scan_banks = ${scan}
+bank_org = ${orgs}
 EOF
 
 cp "$DAW/scaffold/bios.inc" "$dest/banks/bios.inc"
@@ -134,6 +180,34 @@ cp "$DAW/scaffold/Makefile" "$dest/Makefile"
 cp "$DAW/scaffold/gitignore" "$dest/.gitignore"
 cp "$DAW/scaffold/AGENTS.md" "$dest/AGENTS.md"
 sed -i '' "s/__GAME__/${name}/g" "$dest/Makefile" "$dest/AGENTS.md" "$dest/.gitignore"
+if [ -f "$DAW/LICENSE" ]; then
+  cp "$DAW/LICENSE" "$dest/LICENSE"
+fi
+cat > "$dest/NOTICE" <<EOF
+${name} (MSX) disassembly
+Copyright 2026 Akop Karapetyan
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+This Apache license covers original work in this repository: tools,
+comments, documentation, labels, and project structure.
+
+The original game ROM, graphics, music, and sound are not relicensed.
+EOF
+cat > "$dest/README.md" <<EOF
+# ${name} (MSX) — disassembly
+
+A work-in-progress, **byte-exact and reassemblable** disassembly.
+
+\`\`\`sh
+make verify     # assemble, then SHA-1 check against ${name}.sha1
+\`\`\`
+
+Need **sjasmplus** at \`tools/sjasmplus\`. ROM dump is gitignored; the SHA-1
+is committed. Workbench: \`tools/workbench\` (MSXDAW submodule).
+
+See \`docs/game-notes.md\` and \`docs/progress.md\`.
+EOF
 
 cat > "$dest/docs/progress.md" <<EOF
 # ${name} — progress

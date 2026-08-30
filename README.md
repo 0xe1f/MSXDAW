@@ -14,10 +14,10 @@ submodule `tools/workbench`.
 | `konami/` | Konami VRAM RLE, packed-PSG (`psgplay.py` / `sccplay.py`) |
 | `lib/game.py` | Find the game root (`workbench.cfg`) |
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
-| `bin/scaffold` | New game repo |
+| `bin/scaffold` | New game repo (skill `msx-scaffold`; probe first) |
 | `bin/add-skill` / `bin/install-skills` | Skills + project `.cursor/skills` symlinks |
 | `cocoamsx/` | Research display: CALayer present, JSON config, control socket (`tools/disasm/`, skill `msx-cocoamsx`) |
-| `skills/` | Generic agent skills (no ROM-specific addresses). After bootstrap, `msx-code-data` |
+| `skills/` | Generic agent skills (no ROM-specific addresses). New repo: `msx-scaffold`. After bootstrap, `msx-code-data` |
 | `scaffold/` | Templates copied by `bin/scaffold` |
 
 ## Vocabulary

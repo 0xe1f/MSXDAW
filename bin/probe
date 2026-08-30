@@ -13,8 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""First-pass identification of an MSX MegaROM: size, AB header, Konami stamp,
-mapper-register stores, SCC enable. Writes docs/probe.md when a game root exists.
+"""First-pass identification of an MSX cartridge: size, AB header, mapper-register
+stores (Konami / ASCII / linear), Konami stamp, SCC enable. Writes docs/probe.md
+when a game root exists.
 """
 from __future__ import annotations
 
@@ -31,8 +32,10 @@ if str(_LIB) not in sys.path:
 # ld (nn),a  = 32 lo hi
 MAPPER_HINTS = {
     0x5000: "konami-scc page 4000-5FFF / bank select",
-    0x6000: "konami4 page 6000-7FFF / bank select",
-    0x7000: "konami-scc page 6000-7FFF / bank select",
+    0x6000: "konami4 / ascii8 / ascii16 page 4000-5FFF or 6000-7FFF",
+    0x6800: "ascii8 page 6000-7FFF / bank select",
+    0x7000: "konami-scc / ascii8 / ascii16 page 6000-7FFF or 8000-9FFF",
+    0x7800: "ascii8 page A000-BFFF / bank select",
     0x8000: "konami4 page 8000-9FFF / bank select",
     0x9000: "konami-scc page 8000-9FFF / bank select (3F enables SCC)",
     0xA000: "konami4 page A000-BFFF / bank select",
@@ -80,15 +83,29 @@ def probe_bytes(rom: bytes) -> list[str]:
         hits[nn] = c
         if c:
             lines.append(f"  - `{nn:#06x}` x{c}  ({hint})")
-    scc4 = hits.get(0x5000, 0) + hits.get(0x7000, 0) + hits.get(0x9000, 0) + hits.get(0xB000, 0)
-    k4 = hits.get(0x6000, 0) + hits.get(0x8000, 0) + hits.get(0xA000, 0)
-    if scc4 > k4:
+    scc_u = hits.get(0x5000, 0) + hits.get(0x9000, 0) + hits.get(0xB000, 0)
+    k4_u = hits.get(0x8000, 0) + hits.get(0xA000, 0)
+    ascii8_u = hits.get(0x6800, 0) + hits.get(0x7800, 0)
+    if ascii8_u:
+        guess = "ascii8"
+    elif scc_u:
         guess = "konami-scc"
-    elif k4:
+    elif k4_u and banks > 4:
         guess = "konami4"
+    elif banks <= 4:
+        guess = "linear"
+        lines.append(
+            "- 16/32 KiB is usually an unmapped cart (CPU 4000-7FFF or 4000-BFFF), "
+            "not a MegaROM. Do not default scaffold to 16 banks."
+        )
+    elif hits.get(0x6000, 0) and hits.get(0x7000, 0) and not k4_u and not scc_u:
+        guess = "ascii16"
     else:
         guess = "unknown"
-    lines.append(f"- mapper guess: **{guess}** (SCC-style hits={scc4}, Konami4-style hits={k4})")
+    lines.append(
+        f"- mapper guess: **{guess}** "
+        f"(SCC-unique={scc_u}, Konami4-unique={k4_u}, ASCII8-unique={ascii8_u})"
+    )
 
     # ld a,3Fh / ld (9000h),a  = 3E 3F 32 00 90  (and nearby variants)
     scc_en = rom.find(b"\x3e\x3f\x32\x00\x90")
