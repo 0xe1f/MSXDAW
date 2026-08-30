@@ -11,7 +11,7 @@ submodule `tools/workbench`.
 | Path | What |
 |---|---|
 | `msx/` | Mapper-agnostic: regen, romscan, split-rom, gfxview, pngwrite |
-| `konami/` | Konami VRAM RLE, packed-PSG |
+| `konami/` | Konami VRAM RLE, packed-PSG (`psgplay.py` / `sccplay.py`) |
 | `lib/game.py` | Find the game root (`workbench.cfg`) |
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
 | `bin/scaffold` | New game repo |
