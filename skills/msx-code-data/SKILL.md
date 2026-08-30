@@ -2,9 +2,11 @@
 name: msx-code-data
 description: >-
   Split code from data early in a banked Z80 MSX disassembly: .blocks maps,
-  bank classification, inline DISPATCH_A tables, illegal-sequence seeds.
-  Use after msx-bootstrap on a new cart, when writing banks/*.blocks,
-  converting fake instructions to defb/defw, or asking what is code vs data.
+  bank classification, inline DISPATCH_A tables, illegal-sequence seeds,
+  peeling identified blobs into banks/data. Use after msx-bootstrap on a
+  new cart, when writing banks/*.blocks, converting fake instructions to
+  defb/defw, asking what is code vs data, or moving tables/gfx out of a
+  bank file.
 ---
 
 # Split code vs data
@@ -24,8 +26,9 @@ changes rendering, never bytes. Naming: `konami-msx-disasm`. Regen: `msx-regen`.
    low-entropy zero-heavy 4bpp). Mixed banks exist — do not call a map or
    PSG-driver bank “graphics” from entropy alone.
 3. Seed `.blocks` from the mechanical list below. Regen **code** banks with
-   the block file. Leave gfx / packed-PSG payload banks as `INCBIN` until
-   the consumer (`rle_dec`, list loader, PSG interpreter) is found.
+   the block file. Leave gfx / packed-PSG payload as `INCBIN` until the
+   consumer (`rle_dec`, list loader, PSG interpreter) is found, then fold
+   as labelled `.asm` (not z80dasm). End state: no leftover `.bin`.
 4. After the first raw regen, grep `generated/*.raw.asm` for
    `;illegal sequence` and for nonsense `jp` / `ret cc` / `sbc a,*` runs.
    Each hit is a `.blocks` seed.
@@ -75,6 +78,20 @@ range check on A, or a `dec a` / `sub base` immediately before the dispatcher
 - Reuse the first packed-list decoder on the next blob in the same bank.
   A second list often has a different grammar.
 - Mass-convert an unknown bank to opaque `db`.
+
+## Peel (identified blobs)
+
+`INCBIN` is a holding pattern. Once a consumer and a grammar exist, fold the
+blob as labelled `defb`/`defw` (1bpp sheets: `defb %xxxxxxxx` as soon as the
+sheet is found). Every ROM byte ends as labelled `.asm`.
+
+Leave it in the bank file, or as `banks/bankNN.<stem>.inc`, until it is a
+named catalogue of its own. Then `banks/data/<stem>.asm` and `INCLUDE` from
+the bank or window file. PNG pairing: `msx-gfx-sheets`.
+
+Do not create `banks/data/` speculatively. Do not peel jump tables that sit
+next to their dispatcher, or move type-id `.inc` files into `data/`. Do not
+z80dasm a tileset / RLE / packed-PSG payload.
 
 ## Consumers, then scan
 

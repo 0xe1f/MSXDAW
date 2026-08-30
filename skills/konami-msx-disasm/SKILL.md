@@ -25,8 +25,10 @@ banks, or dumpers, keep it in the game. No ROM-specific addresses in DAW skills.
   ROM byte-for-byte (`make verify` checks SHA-1 against a committed
   `<Game>.sha1`). Run it after every edit. Never commit a change that breaks it.
   An original ROM dump is not required to assemble or verify.
-- No binaries in the final repo (goal). 8 KiB banks start as `INCBIN` and
-  graduate to annotated `.asm`. Don’t mass-convert bins to opaque `db`.
+- **No leftover binaries.** End state is labelled `.asm` for every ROM byte
+  (code and identified data). Banks start as `INCBIN` and graduate; PNG/WAV
+  catalogues are previews, not assemble source. Don’t mass-convert unknown
+  blobs to opaque `db`. Peel: `msx-code-data`.
 - Assembler = sjasmplus, disassembler = z80dasm.
 
 ## Bank vs segment
@@ -48,7 +50,10 @@ it at the top of `<Game>.asm`. Do not copy another game’s window grouping.
   keep the ROM address in the block header; add the name to `msx.sym`.
 - Casing: `UPPER_SNAKE` only for MSX BIOS and macro-like helpers (`DISPATCH_A`);
   `lower_snake` for game code/data. Numeric type ids live in `INCLUDE`d `.inc`
-  files, never `msx.sym`.
+  files, never `msx.sym`. Jump tables stay next to their dispatcher.
+- Identified bulky data may be `banks/data/<stem>.asm`, `INCLUDE`d from the
+  bank or window file (`msx-code-data`). Do not mkdir `banks/data/` until
+  the first such peel. Type ids stay in `.inc`, not `data/`.
 - A symbol in an immediate operand is usually a lie (`ld de,CHKRAM` was `ld de,0`).
   Only `call`/`jp`/`jr` targets are real references.
 - `msx.sym` is flat; the ROM is banked. `bank_sym.py` filters per CPU window.

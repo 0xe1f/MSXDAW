@@ -34,8 +34,9 @@ Never copy the generated file over annotated source. Never commit z80dasm
 ## Graduate one leftover bank
 
 1. Confirm CPU origin from paging helpers; put it in `bank_org` and the
-   master’s `PHASE` (`msx-code-data`). Skip gfx / packed-PSG / table-only
-   payload banks (named `INCBIN`, not z80dasm).
+   master’s `PHASE` (`msx-code-data`). Do not z80dasm gfx / packed-PSG /
+   table-only payload — those stay `INCBIN` until the consumer is named,
+   then labelled `.asm` (`msx-code-data` peel).
 2. `regen-bank.sh N [origin] [banks/bankNN.blocks]`
 3. Grep `generated/<prefix>NN.raw.asm` for `;illegal sequence`.
 4. Prepend a bank header; copy the **generated** file (not raw) to

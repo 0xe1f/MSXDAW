@@ -35,7 +35,7 @@ one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo.
 ## Skills
 
 ```
-bin/install-skills    # symlink skills/* -> <project>/.cursor/skills/
+bin/install-skills    # symlink skills/* -> <project>/.cursor/skills/; drop stale
 bin/add-skill NAME    # create skills/NAME + install
 ```
 

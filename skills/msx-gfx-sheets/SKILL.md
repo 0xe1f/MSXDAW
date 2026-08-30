@@ -50,8 +50,10 @@ reuse a dest every stream shares.
 - **4bpp** tiles: hex nibble-rows.
 - Packed RLE *pixel* bytes may use `%`; control bytes stay hex.
 
-`gfx/<kind>/<stem>.png` ↔ `segments/data/<stem>.asm` or `banks/data/<stem>.asm`.
-Add / rename / delete the asm → the PNG goes with it. `make gfx` regenerates.
+`gfx/<kind>/<stem>.png` ↔ `banks/data/<stem>.asm` (older trees:
+`segments/data/`). Create that dir on the first peel (`msx-code-data`), not
+for a sheet that has no asm yet. Add / rename / delete the asm → the PNG
+goes with it. `make gfx` regenerates.
 
 Paint with the VDP palette the game uses when that object is on screen. Do not
 invent even/odd inks or greyscale stand-ins. Do not CC-overlay two SAT planes

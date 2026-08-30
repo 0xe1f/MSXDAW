@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Idempotent: symlink each skills/<name> into the current project's
-# .cursor/skills/<name>. Never writes to ~/.cursor/skills.
+# .cursor/skills/<name>, and remove stale workbench links. Never writes
+# to ~/.cursor/skills.
 set -euo pipefail
 DAW="$(cd "$(dirname "$0")/.." && pwd)"
 HOME_SKILLS="${HOME}/.cursor/skills"
@@ -56,6 +57,22 @@ for d in "$DAW/skills"/*/; do
   name="$(basename "$d")"
   ln -sfn "$(relpath "$d" "$DEST")" "$DEST/$name"
   n=$((n + 1))
+done
+
+# Drop project links that pointed at this workbench after a skill was
+# renamed or removed. Leave anything that is not a workbench skill link.
+for link in "$DEST"/*; do
+  [ -e "$link" ] || [ -L "$link" ] || continue
+  [ -L "$link" ] || continue
+  name="$(basename "$link")"
+  [ -d "$DAW/skills/$name" ] && continue
+  t="$(readlink "$link")"
+  case "$t" in
+    "$DAW/skills"/*|*/tools/workbench/skills/*|*/msxdaw/skills/*)
+      rm -f "$link"
+      echo "unlinked stale $name"
+      ;;
+  esac
 done
 
 if [ -d "$HOME_SKILLS" ]; then
