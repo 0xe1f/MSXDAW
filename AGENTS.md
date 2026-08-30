@@ -16,6 +16,8 @@ required to assemble or verify.
 
 **End state.** Every ROM byte is labelled `.asm`. Leftover `INCBIN` bins are
 scaffold only. Do not mass-convert unknown blobs to opaque `db` (`msx-code-data`).
+Identified 1bpp pixel data is `defb %xxxxxxxx` as soon as it is known
+(`msx-gfx-sheets`); hex rows are not a holding form for sprites or tiles.
 
 **Skills:** `bin/add-skill` (always runs `bin/install-skills`). Link each
 `skills/<name>` into the current project's `.cursor/skills/` and remove
@@ -24,7 +26,8 @@ Agents in a game repo must follow `tools/workbench/skills/` in addition to
 the game’s `.agents/skills/`. Run `bin/install-skills` after pulling
 workbench when skills were added or removed. WAV catalogues (`make music` /
 `make sfx`) follow `msx-psg-catalogue`. Konami renderers are `konami-psg`;
-Taito `psg_play` is `msx/taitoplay.py`.
+Taito `psg_play` is `msx/taitoplay.py`. Catalogue AY generators match
+CocoaMSX `AY8910.c` (in `konami/psgplay.py`).
 
 **Docs:** record changes to this tree (tools, skills, `cocoamsx/`) **here** —
 this file, `README.md`, `skills/<name>/SKILL.md`, and the tool’s own README

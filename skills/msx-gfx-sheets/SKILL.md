@@ -46,9 +46,13 @@ reuse a dest every stream shares.
 
 ## Source form
 
-- **1bpp** identified sheets: `defb %xxxxxxxx` (MSB = left, one row per line).
+- **1bpp pixel data** (tiles, sprites, fonts, unused copies): `defb %xxxxxxxx`
+  (MSB = left, one 8-pixel row per line) as soon as the bytes are known to be
+  1bpp. Do not leave identified 1bpp as hex `0xxh` rows. A PNG is not required
+  first; convert when the consumer or `gfxview` layout is known.
 - **4bpp** tiles: hex nibble-rows.
 - Packed RLE *pixel* bytes may use `%`; control bytes stay hex.
+  Nametable ids, SAT seeds, and colour bytes stay hex.
 
 `gfx/<kind>/<stem>.png` ↔ `banks/data/<stem>.asm` (older trees:
 `segments/data/`). Create that dir on the first peel (`msx-code-data`), not

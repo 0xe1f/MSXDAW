@@ -84,12 +84,18 @@ Fold generated 8 KiB listings into the window file by hand; `make verify`.
 - Identified bulky data may be `banks/data/<stem>.asm`, `INCLUDE`d from the
   bank or window file (`msx-code-data`). Do not mkdir `banks/data/` until
   the first such peel. Type ids stay in `.inc`, not `data/`.
+- Identified **1bpp** pixel rows are `defb %xxxxxxxx` (MSB = left, one row
+  per line): sprites, SCREEN 1/2 tiles, fonts, unused copies. Convert as
+  soon as the layout is known. Do not leave 1bpp as hex because a sheet is
+  not dumped yet (`msx-gfx-sheets`).
 - A symbol in an immediate operand is usually a lie (`ld de,CHKRAM` was `ld de,0`).
   Only `call`/`jp`/`jr` targets are real references.
 - `msx.sym` is flat; the ROM is banked. `bank_sym.py` filters per CPU window.
 
 Text is often `(ASCII - offset)`. Use an sjasmplus `MACRO` so source stays
-readable; space often becomes `0x00`.
+readable; space often becomes `0x00`. Quoted `defb` strings use sjasmplus
+escapes (`\"`, `\\`). Do not split a quote out as `022h`. Single-quoted
+strings do not take backslash (`'"'` is a quote byte).
 
 ## Konami idioms (patterns)
 

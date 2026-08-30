@@ -19,8 +19,11 @@ Reimplements psg_play / psg_tick: a 28-byte index at page 0xB4, 5-byte
 records, two 22-byte slots, and an 8-op fetch (bit7=1). Not Konami
 packed-PSG — do not point konami/psgplay.py at these streams.
 
-AY timing is the shared konami.psgplay model (fmaster/8). Recognizable,
-not analog-accurate.
+AY generators are the shared CocoaMSX ``AY8910.c`` model in konami.psgplay.
+Volume envelopes are multi-segment: when a slide's rest count hits 0,
+psg_tick jumps to lb807h for the next env byte.
+Slot0 period ops (8xh) fall through to that env path, so each bass note
+re-attacks; a pitch-only write leaves later notes stuck at the held vol.
 
 Usage:
   tools/workbench/msx/taitoplay.py Game.rom --id 0xC3
@@ -42,7 +45,7 @@ RAM_SIZE = 0x40
 PSG_PAGE = 0xB400
 SLOT0 = 0xE5D3
 SLOT1 = 0xE5E9
-IDX0 = 0xB406  # psg_idx; play offsets 6..33 land here
+IDX0 = 0xB406  # hdr_idx; play offsets 6..33 land here
 
 
 class Driver:
@@ -383,10 +386,12 @@ class Driver:
                     c -= 1
             self.dirty(d)
             return c
-        # reload from +4
+        # +4 is the remaining-segment counter (first env byte & 0x70).
+        # add 0F0h; NZ → lb807h (next env byte at the pointer in +3).
         v = (self.rb(hl + 4) + 0xF0) & 0xFF
         self.wb(hl + 4, v)
         if v:
+            self._env_setup(hl + 3, 0)
             return c
         self.wb(hl, 0)
         return c
@@ -414,6 +419,16 @@ class Driver:
         opcode = self.peek(self.bc)
         if op == 0:
             self._set_period(0xE5C5, 0x01, e)
+            # psg_op_fn falls through into lb67eh: period A retriggers env.
+            # idx 0: sub_b7e6h pops without writing vol, so leave E5CC.
+            if self.rb(0xE5E6):
+                vol = self._env_vol(0xE5E6)
+                a = self.rb(0xE5E7) & 0x1F
+                if a:
+                    self.wb(0xE5E7, self.rb(0xE5E7) | 0x80)
+                    self.wb(0xE5E8, a)
+                self.wb(0xE5CC, vol)
+                self.dirty(0x10)
         elif op == 1:
             a = self.rb(0xE5E7) & 0x1F
             if a:
@@ -547,8 +562,7 @@ class Driver:
         seconds: float | None = None,
     ) -> bytes:
         self.reset()
-        # 3 channels at vol 15 overflow AY's default /4 (hard clip).
-        self.ay = AY(sample_rate, mix_div=8)
+        self.ay = AY(sample_rate)
         self.ay.write(7, 0xBF)
         self.play(sid)
         cap = (4.0 if sfx else 90.0) if seconds is None else seconds

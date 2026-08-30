@@ -87,8 +87,11 @@ range check on A, or a `dec a` / `sub base` immediately before the dispatcher
 ## Peel (identified blobs)
 
 `INCBIN` is a holding pattern. Once a consumer and a grammar exist, fold the
-blob as labelled `defb`/`defw` (1bpp sheets: `defb %xxxxxxxx` as soon as the
-sheet is found). Every ROM byte ends as labelled `.asm`.
+blob as labelled `defb`/`defw`. Identified **1bpp pixels** (tiles, sprites,
+fonts, leftover copies) are `defb %xxxxxxxx` immediately — not after a PNG,
+not only when the file is a catalogue stem (`msx-gfx-sheets`). Hex `0xxh`
+rows are for unknown or non-pixel bytes. Every ROM byte ends as labelled
+`.asm`.
 
 Leave it in the bank file, or as `banks/bankNN.<stem>.inc`, until it is a
 named catalogue of its own. Then `banks/data/<stem>.asm` and `INCLUDE` from

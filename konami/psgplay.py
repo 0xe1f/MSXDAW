@@ -19,9 +19,9 @@ Reimplements the in-house driver (Vampire Killer sound_tick / sound_fetch /
 sound_sfx_fetch) so any title that shares that bytecode can be rendered by
 pointing --map and the table addresses at its own banks.
 
-AY timing matches the AY-3-8910 (fmaster/8 generators, 16-step envelope
-with period*2).  Still not analog-accurate (no speaker filter; loop/fade
-heuristics on BGM).
+AY generators match CocoaMSX ``AY8910.c`` (blueMSX): 16× oversample, log
+volume, DC high-pass + 1-pole low-pass. Still not analog-accurate
+(loop/fade heuristics on BGM).
 
 Usage:
   tools/disasm/psgplay.py Game.rom --map 14@8000,15@a000 \\
@@ -63,14 +63,37 @@ MIX_NOISE = [(0xF7, 0x01), (0xEF, 0x02), (0xDF, 0x04)]
 MIX_BOTH = [(0xF6, 0x00), (0xED, 0x00), (0xDB, 0x00)]
 MIX_MUTE = [(0xFF, 0x09), (0xFF, 0x12), (0xFF, 0x24)]
 
-# AY 4-bit volume, ~logarithmic (common emulator table, 16-bit peak).
-AY_VOL = [
-    0x0000, 0x0385, 0x053D, 0x0770, 0x0AD7, 0x0FD5, 0x15B0, 0x230C,
-    0x2B34, 0x43A5, 0x5F2C, 0x7DC9, 0xA199, 0xC8D2, 0xF477, 0xFFFF,
-]
+# CocoaMSX AY8910.c (blueMSX): 1.5 dB steps from 0x26a9, then subtract [0].
+_AY_VOLT_MUL = 0.70794578438413791080221494218943
+_AY_REG_MASK = (
+    0xFF, 0x0F, 0xFF, 0x0F, 0xFF, 0x0F, 0x1F, 0x3F,
+    0x1F, 0x1F, 0x1F, 0xFF, 0xFF, 0x0F, 0xFF, 0xFF,
+)
+
+
+def _ay_volt_tables() -> tuple[list[int], list[int]]:
+    v = 0x26A9
+    tone = [0] * 16
+    env = [0] * 32
+    for i in range(15, -1, -1):
+        iv = int(v)
+        tone[i] = iv
+        env[2 * i] = iv
+        env[2 * i + 1] = iv
+        v *= _AY_VOLT_MUL
+    z = tone[0]
+    return [x - z for x in tone], [x - env[0] for x in env]
+
+
+AY_VOL, _AY_ENV_VOL = _ay_volt_tables()
 
 PSG_HZ = 1_789_772.5  # MSX: 3.579545 MHz / 2
 FRAME_HZ = 60.0
+
+
+def _tdiv(n: int, d: int) -> int:
+    """C99 toward-zero integer division."""
+    return -(-n // d) if n < 0 else n // d
 
 
 class BankMap:
@@ -120,127 +143,113 @@ class Tables:
 
 
 class AY:
-    """AY-3-8910 (MAME timing): generators run at fmaster/8.
+    """AY-3-8910 generators from CocoaMSX ``AY8910.c`` (blueMSX).
 
-    Tone freq = fmaster / (16 * period).  Envelope is 16 steps with the
-    period doubled (YM2149 uses 32 steps at twice the clock — same sweep
-    rate, finer levels).  SFX 02/envelope streams are unusable if this
-    clock is off (old code ticked at fmaster/16 and env at fmaster/256).
+    16× oversampled tone, noise LFSR, 32-step HW envelope, log ``voltTable``,
+    DC high-pass and 1-pole low-pass. ``mix_div`` default 4 is the mixer
+    ``1024/4096`` scale at volume 100. Recognizable, not analog-accurate.
     """
-
-    ENV_MASK = 0x0F
-    ENV_MUL = 2  # AY: period * 2 vs YM2149's 32-step /1
 
     def __init__(self, sample_rate: int, mix_div: int = 4):
         self.sr = sample_rate
         self.mix_div = mix_div if mix_div else 4
+        # (1<<28) * 3579545 / 32 / sr  — same as AY8910.c BASE_PHASE_STEP.
+        self.base_step = (1 << 28) * 3579545 // 32 // sample_rate
         self.reg = [0] * 16
-        self.tone_cnt = [0, 0, 0]
-        self.tone_bit = [0, 0, 0]
-        self.noise_cnt = 0
-        self.noise_prescale = 0
-        self.noise_lfsr = 1
-        self.noise_bit = 0
-        self.sub = 0.0
-        self.step = (PSG_HZ / 8.0) / sample_rate
-        self.env_cnt = 0
-        self.env_step = self.ENV_MASK
-        self.env_vol = 0
-        self.env_holding = False
-        self.env_attack = 0
-        self.env_alt = 0
-        self.env_hold = 0
+        self.tone_phase = [0, 0, 0]
+        self.tone_step = [1 << 31, 1 << 31, 1 << 31]
+        self.noise_phase = 0
+        self.noise_step = self.base_step
+        self.noise_rand = 1
+        self.noise_volume = 1
+        self.env_shape = 0
+        self.env_step = self.base_step // 8
+        self.env_phase = 0
+        self.enable = 0
+        self.amp_volume = [0, 0, 0]
+        self.ctrl_volume = 0
+        self.old_sample = 0
+        self.da_volume = 0
 
     def write(self, r: int, v: int) -> None:
         r &= 15
-        self.reg[r] = v & 0xFF
-        if r == 13:
-            self._env_reset()
-
-    def _env_reset(self) -> None:
-        # MAME ay8910_device::envelope_t::set_shape (AY 16-step).
-        shape = self.reg[13] & 0x0F
-        mask = self.ENV_MASK
-        self.env_attack = mask if (shape & 0x04) else 0
-        if (shape & 0x08) == 0:
-            self.env_hold = 1
-            self.env_alt = self.env_attack
-        else:
-            self.env_hold = shape & 1
-            self.env_alt = shape & 2
-        self.env_step = mask
-        self.env_holding = False
-        self.env_cnt = 0
-        self.env_vol = self.env_step ^ self.env_attack
-
-    def _env_tick(self) -> None:
-        if self.env_holding:
-            return
-        period = (self.reg[11] | (self.reg[12] << 8)) * self.ENV_MUL
-        if period == 0:
-            period = self.ENV_MUL
-        self.env_cnt += 1
-        if self.env_cnt < period:
-            return
-        self.env_cnt = 0
-        self.env_step -= 1
-        if self.env_step < 0:
-            if self.env_hold:
-                if self.env_alt:
-                    self.env_attack ^= self.ENV_MASK
-                self.env_holding = True
-                self.env_step = 0
-            else:
-                if self.env_alt and (self.env_step & (self.ENV_MASK + 1)):
-                    self.env_attack ^= self.ENV_MASK
-                self.env_step &= self.ENV_MASK
-        self.env_vol = self.env_step ^ self.env_attack
-
-    def _period(self, ch: int) -> int:
-        p = self.reg[ch * 2] | ((self.reg[ch * 2 + 1] & 0x0F) << 8)
-        return p if p else 1
+        v &= _AY_REG_MASK[r]
+        self.reg[r] = v
+        if r <= 5:
+            period = self.reg[r & 6] | (self.reg[r | 1] << 8)
+            self.tone_step[r >> 1] = (
+                self.base_step // period if period else 1 << 31
+            )
+        elif r == 6:
+            period = v if v else 1
+            self.noise_step = self.base_step // period
+        elif r == 7:
+            self.enable = v
+        elif r <= 10:
+            self.amp_volume[r - 8] = v
+        elif r <= 12:
+            period = 16 * (self.reg[11] | (self.reg[12] << 8))
+            self.env_step = self.base_step // (period if period else 8)
+        elif r == 13:
+            if v < 4:
+                v = 0x09
+            if v < 8:
+                v = 0x0F
+            self.env_shape = v
+            self.env_phase = 0
+            self.reg[13] = v
 
     def sample(self) -> int:
-        self.sub += self.step
-        ticks = int(self.sub)
-        self.sub -= ticks
-        for _ in range(ticks):
-            for ch in range(3):
-                self.tone_cnt[ch] += 1
-                p = self._period(ch)
-                while self.tone_cnt[ch] >= p:
-                    self.tone_cnt[ch] -= p
-                    self.tone_bit[ch] ^= 1
-            np = self.reg[6] & 0x1F
-            if np == 0:
-                np = 1
-            self.noise_cnt += 1
-            if self.noise_cnt >= np:
-                self.noise_cnt = 0
-                self.noise_prescale ^= 1
-                if not self.noise_prescale:
-                    bit0 = self.noise_lfsr & 1
-                    bit3 = (self.noise_lfsr >> 3) & 1
-                    self.noise_lfsr = (self.noise_lfsr >> 1) | ((bit0 ^ bit3) << 16)
-                    self.noise_bit = bit0
-            self._env_tick()
-        mix = self.reg[7]
-        acc = 0
+        sample_vol = [0, 0, 0]
+        self.noise_phase = (self.noise_phase + self.noise_step) & 0xFFFFFFFF
+        while self.noise_phase >> 28:
+            self.noise_phase = (self.noise_phase - 0x10000000) & 0xFFFFFFFF
+            self.noise_volume ^= ((self.noise_rand + 1) >> 1) & 1
+            self.noise_rand = (
+                (self.noise_rand ^ (0x28000 * (self.noise_rand & 1)))
+                & 0xFFFFFFFF
+            ) >> 1
+
+        self.env_phase = (self.env_phase + self.env_step) & 0xFFFFFFFF
+        if (self.env_shape & 1) and (self.env_phase >> 28):
+            self.env_phase = 0x10000000
+        env_volume = (self.env_phase >> 23) & 0x1F
+        if (
+            ((self.env_phase >> 27) & (self.env_shape + 1) ^ (~self.env_shape >> 1))
+            & 2
+        ):
+            env_volume ^= 0x1F
+
         for ch in range(3):
-            tone_off = (mix >> ch) & 1
-            noise_off = (mix >> (ch + 3)) & 1
-            audible = (tone_off or self.tone_bit[ch]) and (
-                noise_off or self.noise_bit
-            )
-            if not audible:
-                continue
-            amp = self.reg[8 + ch]
-            vol = self.env_vol if (amp & 0x10) else (amp & 0x0F)
-            acc += AY_VOL[vol]
-        acc //= self.mix_div
-        if acc > 32767:
-            acc = 32767
-        return acc
+            enable = self.enable >> ch
+            noise_en = ((enable >> 3) | self.noise_volume) & 1
+            phase_step = (~enable & 1) * self.tone_step[ch]
+            tone_phase = self.tone_phase[ch]
+            tone = 0
+            for _ in range(16):
+                tone_phase = (tone_phase + phase_step) & 0xFFFFFFFF
+                tone += (enable | (tone_phase >> 31)) & noise_en
+            self.tone_phase[ch] = tone_phase
+            amp = self.amp_volume[ch]
+            if amp & 0x10:
+                sample_vol[ch] += tone * _AY_ENV_VOL[env_volume] // 16
+            else:
+                sample_vol[ch] += tone * AY_VOL[amp & 0x0F] // 16
+
+        acc = sample_vol[0] + sample_vol[1] + sample_vol[2]
+        self.ctrl_volume = (
+            acc
+            - self.old_sample
+            + _tdiv(0x3FE7 * self.ctrl_volume, 0x4000)
+        )
+        self.old_sample = acc
+        self.da_volume += _tdiv(2 * (self.ctrl_volume - self.da_volume), 3)
+        out = _tdiv(9 * self.da_volume, self.mix_div)
+        if out > 32767:
+            return 32767
+        if out < -32767:
+            return -32767
+        return out
 
 
 class Channel:

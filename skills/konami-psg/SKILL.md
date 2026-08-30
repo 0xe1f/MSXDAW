@@ -8,9 +8,9 @@ description: >-
 
 # Konami packed-PSG
 
-AY-3-8910 timing (fmaster/8). Recognizable, not analog-accurate. Catalogue
-names and default output dirs stay in the **game** `tools/psgplay.py`
-(`msx-psg-catalogue`).
+AY generators match CocoaMSX ``AY8910.c`` (blueMSX). Recognizable, not
+analog-accurate. Catalogue names and default output dirs stay in the **game**
+`tools/psgplay.py` (`msx-psg-catalogue`).
 
 Taito carts (`psg_play` / 5-byte records / two slots) use
 `msx/taitoplay.py`, not these players.
