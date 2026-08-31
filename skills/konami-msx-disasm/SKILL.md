@@ -76,11 +76,20 @@ Fold generated 8 KiB listings into the window file by hand; `make verify`.
 ## Conventions
 
 - Never leave z80dasm `;addr bytes ascii` tails in committed `.asm`.
-- Annotate per-opcode (column 32). Rename `sub_XXXXh`/`lXXXXh` when confirmed;
-  keep the ROM address in the block header; add the name to `msx.sym`.
+- Annotate per-opcode (column 32). If a line is already in front of you and
+  you have high confidence what that instruction does, leave the comment
+  on that line — a cheap win; do not save it for a later pass. Guessing
+  does not count. Rename `sub_XXXXh`/`lXXXXh` when confirmed; keep the ROM
+  address in the block header; add the name to `msx.sym`.
 - Casing: `UPPER_SNAKE` only for MSX BIOS and macro-like helpers (`DISPATCH_A`);
   `lower_snake` for game code/data. Numeric type ids live in `INCLUDE`d `.inc`
   files, never `msx.sym`. Jump tables stay next to their dispatcher.
+- Names should not be overly long, but do not abbreviate excessively —
+  especially when the short form is cryptic and the saved letters are few
+  (`round` not `rnd`; `disrupt` is enough, `disruption` is not required).
+  The same rule applies to name parts (`table` not `nt`, `unpack` not
+  `unp`, `explode` not `expl`). Keep established machine words (`sat`,
+  `vdp`, `psg`).
 - Identified bulky data may be `banks/data/<stem>.asm`, `INCLUDE`d from the
   bank or window file (`msx-code-data`). Do not mkdir `banks/data/` until
   the first such peel. Type ids stay in `.inc`, not `data/`.

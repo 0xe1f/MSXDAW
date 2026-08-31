@@ -18,6 +18,8 @@ required to assemble or verify.
 scaffold only. Do not mass-convert unknown blobs to opaque `db` (`msx-code-data`).
 Identified 1bpp pixel data is `defb %xxxxxxxx` as soon as it is known
 (`msx-gfx-sheets`); hex rows are not a holding form for sprites or tiles.
+Per-opcode comments (column 32) when the line is in front of you and the
+meaning is confirmed — a cheap win, not a later pass (`konami-msx-disasm`).
 
 **Skills:** `bin/add-skill` (always runs `bin/install-skills`). Link each
 `skills/<name>` into the current project's `.cursor/skills/` and remove
