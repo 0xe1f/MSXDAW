@@ -203,8 +203,9 @@ A work-in-progress, **byte-exact and reassemblable** disassembly.
 make verify     # assemble, then SHA-1 check against ${name}.sha1
 \`\`\`
 
-Need **sjasmplus** at \`tools/sjasmplus\`. ROM dump is gitignored; the SHA-1
-is committed. Workbench: \`tools/workbench\` (MSXDAW submodule).
+Need **sjasmplus** at \`tools/sjasmplus\` (\`tools/workbench/bin/install-sjasmplus\`).
+ROM dump is gitignored; the SHA-1 is committed. Workbench: \`tools/workbench\`
+(MSXDAW submodule).
 
 See \`docs/game-notes.md\` and \`docs/progress.md\`.
 EOF

@@ -10,7 +10,8 @@ description: >-
 # MSX bank regen
 
 Need `z80dasm`, `tools/sjasmplus`, a `workbench.cfg`, and a built `<Game>.rom`
-(`make`, or `ROM=`). Run from the **game** repo root. Do not invent a one-off
+(`make`, or `ROM=`). Missing assembler: `tools/workbench/bin/install-sjasmplus`
+(`msx-scaffold`). Run from the **game** repo root. Do not invent a one-off
 disassembler.
 
 ## Regen one bank

@@ -4,7 +4,7 @@
 #   make verify     SHA-1 check against __GAME__.sha1
 #   make banks      extract leftover 8 KiB bins / drop migrated ones
 #
-# Prerequisite: tools/sjasmplus (built from source, gitignored)
+# Prerequisite: tools/sjasmplus (tools/workbench/bin/install-sjasmplus)
 
 include tools/workbench/make/game.mk
 

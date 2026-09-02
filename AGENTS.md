@@ -24,12 +24,13 @@ meaning is confirmed — a cheap win, not a later pass (`konami-msx-disasm`).
 **Skills:** `bin/add-skill` (always runs `bin/install-skills`). Link each
 `skills/<name>` into the current project's `.cursor/skills/` and remove
 stale workbench links after a rename or delete. Never `~/.cursor/skills`.
-Agents in a game repo must follow `tools/workbench/skills/` in addition to
-the game’s `.agents/skills/`. Run `bin/install-skills` after pulling
-workbench when skills were added or removed. WAV catalogues (`make music` /
-`make sfx`) follow `msx-psg-catalogue`. Konami renderers are `konami-psg`;
-Taito `psg_play` is `msx/taitoplay.py`. Catalogue AY generators match
-CocoaMSX `AY8910.c` (in `konami/psgplay.py`).
+Missing assembler: `bin/install-sjasmplus` (`msx-scaffold`). Agents in a
+game repo must follow `tools/workbench/skills/` in addition to the game’s
+`.agents/skills/`. Run `bin/install-skills` after pulling workbench when
+skills were added or removed. WAV catalogues (`make music` / `make sfx`)
+follow `msx-psg-catalogue`. Konami renderers are `konami-psg`; Taito
+`psg_play` is `msx/taitoplay.py`. Catalogue AY generators match CocoaMSX
+`AY8910.c` (in `konami/psgplay.py`).
 
 **Docs:** record changes to this tree (tools, skills, `cocoamsx/`) **here** —
 this file, `README.md`, `skills/<name>/SKILL.md`, and the tool’s own README

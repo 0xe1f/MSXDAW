@@ -63,11 +63,19 @@ nested `kingsvalley2/tools/workbench` path.
 1. `docs/probe.md` — run `bin/probe` from the **new** repo root.
 2. `workbench.cfg` — set `bank_org` from the mapper (`4000,6000,8000,A000`
    for linear 32 KiB; drop trailing pages for 16 KiB).
-3. Symlink or copy `tools/sjasmplus` from another game repo (gitignored).
+3. Install sjasmplus (gitignored `tools/sjasmplus`):
+   ```
+   tools/workbench/bin/install-sjasmplus
+   ```
+   Clones [z00m128/sjasmplus](https://github.com/z00m128/sjasmplus) **v1.24.0**
+   (`--recursive`), builds, copies into this game. Idempotent if the binary
+   is already there (`--force` to rebuild). Need git, make, and a C++ compiler.
+   A copy/symlink from another DAW game is fine only if that binary is the
+   same pin.
 4. `cocoamsx.json` from `tools/workbench/cocoamsx/cocoamsx.json.example`.
    Pick `MSX - C-BIOS` vs `MSX2 - C-BIOS` from the cart generation.
-5. `.github/workflows/verify.yml` — build sjasmplus, `make verify`, delete
-   the assembled ROM. Parameterize the `.rom` name.
+5. `.github/workflows/verify.yml` — `tools/workbench/bin/install-sjasmplus`,
+   `make verify`, delete the assembled ROM. Parameterize the `.rom` name.
 6. `NOTICE` copyright line: original publisher + year. Apache covers
    **our** comments and structure only.
 7. `bin/install-skills` (scaffold already runs it).

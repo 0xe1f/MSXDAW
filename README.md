@@ -1,7 +1,9 @@
 # MSXDAW — MSX Disassembly Workbench
 
+![logo](docs/daw.png)
+
 Tools, skills, and templates for **byte-exact** Z80 disassemblies of MSX / MSX2
-MegaROMs. Not a game.
+MegaROMs.
 
 Game repos (Vampire Killer, King's Valley II, …) consume this tree as the git
 submodule `tools/workbench`.
@@ -16,6 +18,7 @@ submodule `tools/workbench`.
 | `bin/probe` | Mapper / `AB` / Konami stamp report |
 | `bin/scaffold` | New game repo (skill `msx-scaffold`; probe first) |
 | `bin/add-skill` / `bin/install-skills` | Skills + project `.cursor/skills` symlinks |
+| `bin/install-sjasmplus` | Clone/build z00m128/sjasmplus **v1.24.0** → game `tools/sjasmplus` (skill `msx-scaffold`) |
 | `cocoamsx/` | Research display: CALayer present, JSON config, control socket (`tools/disasm/`, skill `msx-cocoamsx`) |
 | `skills/` | Generic agent skills (no ROM-specific addresses). New repo: `msx-scaffold`. After bootstrap, `msx-code-data` |
 | `scaffold/` | Templates copied by `bin/scaffold` |
@@ -37,8 +40,9 @@ one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo.
 ## Skills
 
 ```
-bin/install-skills    # symlink skills/* -> <project>/.cursor/skills/; drop stale
-bin/add-skill NAME    # create skills/NAME + install
+bin/install-skills     # symlink skills/* -> <project>/.cursor/skills/; drop stale
+bin/add-skill NAME     # create skills/NAME + install
+bin/install-sjasmplus  # build z00m128/sjasmplus v1.24.0 -> tools/sjasmplus
 ```
 
 Agents follow `skills/` (and this repo’s `AGENTS.md`) in addition to a game’s
