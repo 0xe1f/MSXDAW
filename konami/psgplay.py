@@ -15,8 +15,8 @@
 
 """Render Konami packed-PSG bytecode through an AY-3-8910 model.
 
-Reimplements the in-house driver (Vampire Killer sound_tick / sound_fetch /
-sound_sfx_fetch) so any title that shares that bytecode can be rendered by
+Reimplements the in-house 6-byte music-rec driver (3 PSG channels, 20-byte
+channel template) so any title that shares that bytecode can be rendered by
 pointing --map and the table addresses at its own banks.
 
 AY generators match CocoaMSX ``AY8910.c`` (blueMSX): 16× oversample, log
@@ -24,11 +24,11 @@ volume, DC high-pass + 1-pole low-pass. Still not analog-accurate
 (loop/fade heuristics on BGM).
 
 Usage:
-  tools/disasm/psgplay.py Game.rom --map 14@8000,15@a000 \\
-      --music-ptr 0x8DC9 --sfx-ptr 0x8D8D \\
-      --env-ptr 0xAAD6 --env-alt 0xAAEE --note-tbl 0x8B81 \\
-      --music-ids 0x80-0x8E --name 0x80=80_theme
-  tools/disasm/psgplay.py Game.rom --map ... --sfx --sfx-ids 1-0x1D
+  tools/workbench/konami/psgplay.py Game.rom --map 2@8000,3@a000 \\
+      --music-ptr 0xNNNN --sfx-ptr 0xNNNN \\
+      --env-ptr 0xNNNN --env-alt 0xNNNN --note-tbl 0xNNNN \\
+      --music-ids 0x80-0x8F --name 0x80=80_theme
+  tools/workbench/konami/psgplay.py Game.rom --map ... --sfx --sfx-ids 1-0x10
 """
 from __future__ import annotations
 
@@ -40,13 +40,13 @@ import wave
 
 BANK_SIZE = 0x2000
 
-# One octave, little-endian periods (sound_note_tbl).  Also loaded from ROM.
+# One octave, little-endian periods (note table). Also loaded from ROM.
 NOTE_PERIODS = [
     0x1AB8, 0x1938, 0x17D0, 0x1678, 0x1534, 0x1404,
     0x12E4, 0x11D4, 0x10D4, 0x0FE4, 0x0F00, 0x0E28,
 ]
 
-# play_sound copies this 20-byte block to each music channel (sound_ch_template).
+# The driver copies this 20-byte block to each music channel.
 TEMPLATE = bytes([
     0x00, 0x00,  # +0 stream ptr (filled in)
     0x01, 0x00, 0x00,  # +2 flags (bit0=tone), +3 scale, +4 base vol
@@ -57,7 +57,7 @@ TEMPLATE = bytes([
     0x00, 0x00, 0x00,  # +17..+19 call return
 ])
 
-# Mixer AND/OR pairs (sound_mix_*_tbl), indexed by channel 0..2.
+# Mixer AND/OR pairs, indexed by channel 0..2.
 MIX_TONE = [(0xFE, 0x08), (0xFD, 0x10), (0xFB, 0x20)]
 MIX_NOISE = [(0xF7, 0x01), (0xEF, 0x02), (0xDF, 0x04)]
 MIX_BOTH = [(0xF6, 0x00), (0xED, 0x00), (0xDB, 0x00)]
@@ -114,14 +114,14 @@ class BankMap:
 
     @classmethod
     def parse(cls, spec):
-        """Parse '14@8000,15@a000' -> BankMap."""
+        """Parse '2@8000,3@a000' -> BankMap."""
         windows = []
         for part in spec.split(","):
             part = part.strip()
             if not part:
                 continue
             if "@" not in part:
-                raise ValueError("map entry %r: want BANK@CPU (e.g. 14@8000)" % part)
+                raise ValueError("map entry %r: want BANK@CPU (e.g. 2@8000)" % part)
             bank_s, base_s = part.split("@", 1)
             base_s = base_s.strip()
             cpu_base = int(base_s, 16)  # 8000, a000, or 0x8000
@@ -350,7 +350,7 @@ class Driver:
         return bytes(pcm), ptrs
 
     def play_sfx(self, sid: int, sample_rate: int, max_seconds: float):
-        """Solo sfx on PSG C (slot 3), matching play_sound 1..N."""
+        """Solo sfx on PSG C (slot 3), matching play ids 1..N."""
         ptr = self.peek16(self.tables.sfx_ptr + sid * 2)
         self.ay = AY(sample_rate)
         self.mixer = 0xBF  # all muted; sfx mixer ops enable C
@@ -394,7 +394,7 @@ class Driver:
             return
         flags = st[2]
         if flags & 1:
-            # Pitched: decay / hold (see sound_ch_tick).
+            # Pitched: decay / hold.
             if dur >= st[11]:
                 self._decay_vol(ch)
                 return
@@ -708,20 +708,20 @@ def main(argv=None) -> None:
     ap.add_argument(
         "--map",
         required=True,
-        help="BANK@CPU windows (8 KiB), comma-separated, e.g. 14@8000,15@a000",
+        help="BANK@CPU windows (8 KiB), comma-separated, e.g. 2@8000,3@a000",
     )
     ap.add_argument("--music-ptr", type=lambda s: int(s, 0), required=True,
                     help="6-byte records (3 channel ptrs); id 0x80 is record 0")
     ap.add_argument("--sfx-ptr", type=lambda s: int(s, 0), required=True,
-                    help="word table; play_sound indexes id*2 (id 1 = first sfx)")
+                    help="word table; SFX indexes id*2 (id 1 = first sfx)")
     ap.add_argument("--env-ptr", type=lambda s: int(s, 0), required=True)
     ap.add_argument("--env-alt", type=lambda s: int(s, 0), required=True)
     ap.add_argument("--note-tbl", type=lambda s: int(s, 0), required=True,
                     help="12 little-endian periods (one octave)")
     ap.add_argument("--sfx", action="store_true", help="render sfx instead of BGM")
     ap.add_argument("--id", type=lambda s: int(s, 0), help="single id")
-    ap.add_argument("--music-ids", type=parse_id_range, help="BGM range, e.g. 0x80-0x8E")
-    ap.add_argument("--sfx-ids", type=parse_id_range, help="sfx range, e.g. 1-0x1D")
+    ap.add_argument("--music-ids", type=parse_id_range, help="BGM range, e.g. 0x80-0x8F")
+    ap.add_argument("--sfx-ids", type=parse_id_range, help="sfx range, e.g. 1-0x10")
     ap.add_argument("--name", action="append", default=[], metavar="ID=STEM",
                     type=parse_name, help="output filename stem (repeatable)")
     ap.add_argument("--loops", type=int, default=2, help="EA-loop repeats before fade (BGM)")
@@ -732,7 +732,7 @@ def main(argv=None) -> None:
     ap.add_argument("--rate", type=int, default=22050)
     ap.add_argument("-o", "--out", default=".")
     ap.add_argument("--no-verify", action="store_true",
-                    help="skip sound_note_tbl sanity check")
+                    help="skip note-table sanity check")
     args = ap.parse_args(argv)
 
     if not os.path.isfile(args.rom):

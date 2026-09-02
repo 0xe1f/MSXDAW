@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Render Taito PSG bytecode (Arkanoid-style) through an AY-3-8910 model.
+"""Render Taito PSG bytecode through an AY-3-8910 model.
 
 Reimplements psg_play / psg_tick: a 28-byte index at page 0xB4, 5-byte
 records, two 22-byte slots, and an 8-op fetch (bit7=1). Not Konami
@@ -21,13 +21,13 @@ packed-PSG — do not point konami/psgplay.py at these streams.
 
 AY generators are the shared CocoaMSX ``AY8910.c`` model in konami.psgplay.
 Volume envelopes are multi-segment: when a slide's rest count hits 0,
-psg_tick jumps to lb807h for the next env byte.
+the tick fetches the next env byte.
 Slot0 period ops (8xh) fall through to that env path, so each bass note
 re-attacks; a pitch-only write leaves later notes stuck at the held vol.
 
 Usage:
-  tools/workbench/msx/taitoplay.py Game.rom --id 0xC3
-  tools/workbench/msx/taitoplay.py Game.rom --sfx --id 0x05
+  tools/workbench/msx/taitoplay.py Game.rom --id 1
+  tools/workbench/msx/taitoplay.py Game.rom --sfx --id 1
 """
 from __future__ import annotations
 
@@ -124,7 +124,7 @@ class Driver:
         self._install(SLOT1, (a + 1) & 0xFF)
 
     def _control(self, n: int) -> None:
-        # lb559h. F8 (n=8) rrca/rra/rrca → writes 1 to E5C2.
+        # F8 (n=8) rrca/rra/rrca → writes 1 to E5C2.
         a = n & 0xFF
         if a & 1:
             return
@@ -137,7 +137,7 @@ class Driver:
         self.wb(0xE5C2, a)
 
     def _install(self, slot: int, off: int) -> None:
-        # sub_b51dh: A is a 0xB4xx offset; that byte is the record low addr.
+        # A is a 0xB4xx offset; that byte is the record low addr.
         rec_lo = self.peek(PSG_PAGE | (off & 0xFF))
         rec = PSG_PAGE | rec_lo
         if self.rb(0xE5C2) == 0:
@@ -200,7 +200,7 @@ class Driver:
         return False, 0
 
     def _reload_stream(self, slot: int, rec2: int) -> None:
-        # lb54dh from BC pointing at rec[2]
+        # Reload from BC pointing at rec[2].
         self.bc = (rec2 + 1) & 0xFFFF
         lo = self.peek(self.bc)
         self.bc = (self.bc + 1) & 0xFFFF
@@ -274,7 +274,7 @@ class Driver:
             self.wb(0xE5D2, self.rb(0xE5D2) & 0xF7)
 
     def _set_period(self, hl_hi: int, d: int, e: int) -> None:
-        # sub_b6e6h
+        # Period write.
         a = self.rb(self.ix + 0x0B) & 7
         self.wb(self.ix + 0x0C, a)
         if self.rb(self.ix + 0x0B) & 0x40:
@@ -290,7 +290,7 @@ class Driver:
         self.dirty(d)
 
     def _mixer(self, d: int, e: int, opcode: int) -> bool:
-        """sub_b82d / sub_b831. False = skip the rest of this handler."""
+        """False = skip the rest of this handler."""
         self.wb(self.ix + 0x0B, 0)
         l = self.rb(0xE5CB)
         a = e
@@ -310,7 +310,7 @@ class Driver:
         return (opcode & 4) != 0
 
     def _env_vol(self, idx_addr: int) -> int:
-        """sub_b7e6h. Returns volume nibble in E (0 if idx is 0)."""
+        """Returns volume nibble in E (0 if idx is 0)."""
         idx = self.rb(idx_addr)
         if idx == 0:
             return 0
@@ -328,7 +328,7 @@ class Driver:
         return raw & 0x0F
 
     def _env_setup(self, hl_ptr: int, src: int) -> None:
-        # lb807h; HL on entry is the stored pointer byte (idx_addr-2).
+        # HL on entry is the stored pointer byte (idx_addr-2).
         p = (self.rb(hl_ptr) + 1) & 0xFF
         self.wb(hl_ptr, p)
         e = self.peek(0xB400 | p)
@@ -387,7 +387,7 @@ class Driver:
             self.dirty(d)
             return c
         # +4 is the remaining-segment counter (first env byte & 0x70).
-        # add 0F0h; NZ → lb807h (next env byte at the pointer in +3).
+        # add 0F0h; NZ → next env byte at the pointer in +3.
         v = (self.rb(hl + 4) + 0xF0) & 0xFF
         self.wb(hl + 4, v)
         if v:
@@ -419,8 +419,7 @@ class Driver:
         opcode = self.peek(self.bc)
         if op == 0:
             self._set_period(0xE5C5, 0x01, e)
-            # psg_op_fn falls through into lb67eh: period A retriggers env.
-            # idx 0: sub_b7e6h pops without writing vol, so leave E5CC.
+            # Period A retriggers env. idx 0 pops without writing vol, so leave E5CC.
             if self.rb(0xE5E6):
                 vol = self._env_vol(0xE5E6)
                 a = self.rb(0xE5E7) & 0x1F

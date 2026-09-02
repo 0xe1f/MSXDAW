@@ -14,7 +14,7 @@
 # limitations under the License.
 
 """Re-pack a flat byte buffer into a Konami MSX RLE stream (the inverse of
-tools/disasm/rledec.py / the game's decompressor rle_dec).
+tools/workbench/konami/rledec.py).
 
 Grammar emitted:
   0x01..0x7F  N   RUN     : next single byte repeated N times
@@ -31,8 +31,8 @@ smaller stream that decodes to the identical pixels - fine for edited assets,
 since path A keeps the untouched original bytes authoritative in the ROM.
 
 Usage:
-  tools/disasm/rleenc.py <flat.bin> [--out packed.rle]
-  tools/disasm/rleenc.py <flat.bin> --verify <rom> <src-hex>   # compare to original
+  tools/workbench/konami/rleenc.py <flat.bin> [--out packed.rle]
+  tools/workbench/konami/rleenc.py <flat.bin> --verify <rom> <src-hex>   # compare to original
 """
 import argparse
 

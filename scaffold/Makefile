@@ -2,6 +2,7 @@
 #
 #   make            assemble __GAME__.asm -> __GAME__.rom
 #   make verify     SHA-1 check against __GAME__.sha1
+#   make coverage   Shields.io JSON under generated/badges/ (does not edit README)
 #   make banks      extract leftover 8 KiB bins / drop migrated ones
 #
 # Prerequisite: tools/sjasmplus (tools/workbench/bin/install-sjasmplus)

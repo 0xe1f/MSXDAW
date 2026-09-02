@@ -3,14 +3,13 @@
 #
 #   tools/disasm/trace-run.sh [rom]
 #
-# Game repo from workbench.cfg (cwd walk or GAME=). VK= is still accepted as an alias.
+# Game repo from workbench.cfg (cwd walk or GAME=).
 # Snapshots and the exec/watch log land in the game's generated/ (gitignored there).
 #
 # Environment knobs (all optional):
 #   GAME   game repo (default: walk for workbench.cfg)
-#   VK     alias for GAME (legacy)
-#   EXEC   exec address ranges, e.g. "6552-66c0"
-#   WATCH  memory-write ranges, e.g. "ce00-ce15"
+#   EXEC   exec address ranges, e.g. "4000-4010"
+#   WATCH  memory-write ranges, e.g. "c000-c01f"
 #   LOG    trace log
 #   SNAP   snapshot file
 #   SNAPRANGE  RAM window per snapshot (default c000-dfff)
@@ -23,17 +22,12 @@ set -euo pipefail
 src="$(cd "$(dirname "$0")/../.." && pwd)"
 daw="$(cd "$src/.." && pwd)"
 export PYTHONPATH="${daw}/lib${PYTHONPATH:+:$PYTHONPATH}"
-if [ -n "${GAME:-}" ]; then
-  :
-elif [ -n "${VK:-}" ]; then
-  export GAME="$VK"
-fi
 if python3 "$daw/lib/game.py" --root >/dev/null 2>&1; then
   game="$(python3 "$daw/lib/game.py" --root)"
   default_rom="$(python3 "$daw/lib/game.py" --rom)"
 else
-  game="${GAME:-$HOME/code/vampirekiller}"
-  default_rom="$game/VampireKiller.rom"
+  echo "no game repo (workbench.cfg or GAME=)" >&2
+  exit 1
 fi
 
 app="$src/generated/cocoamsx-dd/Build/Products/Debug/CocoaMSX.app/Contents/MacOS/CocoaMSX"

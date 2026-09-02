@@ -15,7 +15,7 @@
 
 # Scaffold a new MSXDAW game repo.
 #
-#   scaffold <dest-dir> --name KingsValley2 --mapper konami-scc [--rom path]
+#   scaffold <dest-dir> --name Game --mapper konami-scc [--rom path]
 # Probe the ROM first (bin/probe). Pass --mapper / --banks from that report.
 # 16/32 KiB unmapped carts: --mapper linear --banks 4 (or 2).
 set -euo pipefail
@@ -179,7 +179,10 @@ fi
 cp "$DAW/scaffold/Makefile" "$dest/Makefile"
 cp "$DAW/scaffold/gitignore" "$dest/.gitignore"
 cp "$DAW/scaffold/AGENTS.md" "$dest/AGENTS.md"
-sed -i '' "s/__GAME__/${name}/g" "$dest/Makefile" "$dest/AGENTS.md" "$dest/.gitignore"
+mkdir -p "$dest/.github/workflows"
+cp "$DAW/scaffold/github/workflows/verify.yml" "$dest/.github/workflows/verify.yml"
+sed -i '' "s/__GAME__/${name}/g" "$dest/Makefile" "$dest/AGENTS.md" "$dest/.gitignore" \
+  "$dest/.github/workflows/verify.yml"
 if [ -f "$DAW/LICENSE" ]; then
   cp "$DAW/LICENSE" "$dest/LICENSE"
 fi
@@ -194,13 +197,38 @@ comments, documentation, labels, and project structure.
 
 The original game ROM, graphics, music, and sound are not relicensed.
 EOF
+
+badge=""
+origin="$(git -C "$dest" remote get-url origin 2>/dev/null || true)"
+if [ -n "$origin" ]; then
+  slug="${origin%.git}"
+  slug="${slug%/}"
+  case "$slug" in
+    git@github.com:*) slug="${slug#git@github.com:}" ;;
+    https://github.com/*) slug="${slug#https://github.com/}" ;;
+    http://github.com/*) slug="${slug#http://github.com/}" ;;
+    ssh://git@github.com/*) slug="${slug#ssh://git@github.com/}" ;;
+    *) slug="" ;;
+  esac
+  if [ -n "$slug" ]; then
+    actions="https://github.com/${slug}/actions/workflows/verify.yml"
+    ep="https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/${slug}/badges"
+    badge="[![verify](${actions}/badge.svg)](${actions})
+[![in source](${ep}/in-source.json)](${actions})
+[![named](${ep}/named.json)](${actions})
+[![comments](${ep}/commented.json)](${actions})
+[![subs](${ep}/subs.json)](${actions})
+"
+  fi
+fi
 cat > "$dest/README.md" <<EOF
 # ${name} (MSX) — disassembly
-
+${badge}
 A work-in-progress, **byte-exact and reassemblable** disassembly.
 
 \`\`\`sh
 make verify     # assemble, then SHA-1 check against ${name}.sha1
+make coverage   # local Shields JSON under generated/badges/
 \`\`\`
 
 Need **sjasmplus** at \`tools/sjasmplus\` (\`tools/workbench/bin/install-sjasmplus\`).

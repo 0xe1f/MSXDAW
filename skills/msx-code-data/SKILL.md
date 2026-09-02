@@ -29,7 +29,7 @@ changes rendering, never bytes. Naming: `konami-msx-disasm`. Regen: `msx-regen`.
    PSG-driver bank “graphics” from entropy alone.
 3. Seed `.blocks` from the mechanical list below. Regen **code** banks with
    the block file. Leave gfx / packed-PSG payload as `INCBIN` until the
-   consumer (`rle_dec`, list loader, PSG interpreter) is found, then fold
+   consumer (RLE decoder, list loader, PSG interpreter) is found, then fold
    as labelled `.asm` (not z80dasm). End state: no leftover `.bin`.
 4. After the first raw regen, grep `generated/*.raw.asm` for
    `;illegal sequence` and for nonsense `jp` / `ret cc` / `sbc a,*` runs.
@@ -103,7 +103,7 @@ z80dasm a tileset / RLE / packed-PSG payload.
 
 ## Consumers, then scan
 
-Once `rle_dec` / the text blit / the PSG interpreter is named in bank 0,
+Once the RLE decoder / the text blit / the PSG interpreter is named in bank 0,
 scan other banks for well-formed streams (`msx-gfx` RLE grammar; `0x00`
 end). Those regions are data. `gfxview.py` on a low-entropy bank is a
 preview, not a split.

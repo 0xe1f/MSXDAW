@@ -11,13 +11,13 @@ socket (`cocoamsx-ctl`) can change watches, peek RAM, inject keys, and
 load savestates without a relaunch.
 
 The game ROM, snapshot file, and exec/watch log stay in the **game** repo
-(found via `workbench.cfg`, or `GAME=` / legacy `VK=`).
+(found via `workbench.cfg`, or `GAME=`).
 
 ```
 tools/disasm/build-cocoamsx.sh
-WATCH=ce00-ce15 tools/disasm/trace-run.sh
+WATCH=c000-c01f tools/disasm/trace-run.sh
 COCOAMSX_ROM2=/path/to/GameMaster.rom tools/disasm/trace-run.sh
-tools/disasm/cocoamsx-ctl peek c425
+tools/disasm/cocoamsx-ctl peek c000
 tools/disasm/snapdiff.py generated/disasmsnap.bin
 ```
 

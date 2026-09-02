@@ -1,10 +1,10 @@
 ; ===========================================================================
-;  MSX / MSX2 main-ROM BIOS entry points (shared by all segment sources).
+;  MSX / MSX2 main-ROM BIOS entry points (shared by all bank sources).
 ;  These resolve to fixed addresses in the machine's BIOS ROM and are never
 ;  emitted into the cartridge image - they only make the disassembly readable
-;  (e.g. `call ENASLT` instead of `call 0x0024`).  Included once by
-;  VampireKiller.asm before the segment blocks.  Keep in sync with segments/msx.sym
-;  (the copy z80dasm reads when regenerating a segment).
+;  (e.g. `call ENASLT` instead of `call 0x0024`).  Included once by the
+;  master .asm.  Keep in sync with banks/msx.sym (the copy z80dasm reads
+;  when regenerating a bank).
 ; ===========================================================================
 CHKRAM:  equ 0x0000
 SYNCHR:  equ 0x0008

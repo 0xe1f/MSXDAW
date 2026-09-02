@@ -25,7 +25,7 @@ in that skill, not in a game repo’s `docs/`.
 ```
 tools/disasm/build-cocoamsx.sh
 tools/disasm/trace-run.sh /path/to/game.rom
-tools/disasm/cocoamsx-ctl peek c425
+tools/disasm/cocoamsx-ctl peek c000
 ```
 
 Game ROMs, snapshot files, and logs stay in the **game** repo (`workbench.cfg`).

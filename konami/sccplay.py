@@ -15,14 +15,14 @@
 
 """Render Konami 8-channel packed-PSG + SCC bytecode to WAV.
 
-Reimplements the King's Valley II driver (sound_play 18-byte packed header,
-8 slots, sound_tick). AY-3-8910 + Konami SCC. Recognizable, not analog-accurate.
+Reimplements the 18-byte packed-header driver (8 slots: 3 AY + 5 SCC).
+Recognizable, not analog-accurate.
 
-Not Vampire Killer's 6-byte music-rec driver (that is psgplay.py).
+Not the 6-byte music-rec driver (that is psgplay.py).
 
 Usage:
-  tools/workbench/konami/sccplay.py Game.rom --map 4@6000,5@8000,6@A000 \\
-      --ptr 0x6F2E --id 5 -o music/
+  tools/workbench/konami/sccplay.py Game.rom --map 1@6000,2@8000,3@A000 \\
+      --ptr 0xNNNN --id 1 -o music/
 """
 from __future__ import annotations
 
@@ -167,7 +167,7 @@ class Driver:
         min_frames = int(min_seconds * FRAME_HZ)
 
         for frame in range(max_frames + fade_frames + 1):
-            self.sound_tick()
+            self.tick()
             if stop_at is None:
                 if self._all_idle():
                     stop_at = frame + fade_frames
@@ -200,7 +200,7 @@ class Driver:
         return all(self.chb(b, 0) == 0 for b in CH_BASE)
 
     def play_id(self, sid: int) -> None:
-        # sound_play without 0x80-0x84 special cases (catalogue uses 1-0x41).
+        # Play without 0x80-0x84 special cases (catalogue uses 1-based ids).
         self.wb(0xE1CC, sid)
         hdr = self.peek16(self.ptr_tbl + (sid - 1) * 2)
         for i in range(18):
@@ -230,7 +230,7 @@ class Driver:
         for i, b in enumerate(TEMPLATE):
             self.chw(base, 4 + i, b)
 
-    def sound_tick(self) -> None:
+    def tick(self) -> None:
         self.wrpsg(7, self.rb(0xE1E3))
         e1fd = 0xE1FD
         if self.fda2 != self.rb(e1fd):
@@ -984,13 +984,13 @@ def main(argv=None) -> None:
     ap.add_argument(
         "--map",
         required=True,
-        help="BANK@CPU windows (8 KiB), e.g. 4@6000,5@8000,6@A000",
+        help="BANK@CPU windows (8 KiB), e.g. 1@6000,2@8000,3@A000",
     )
     ap.add_argument(
         "--ptr",
         type=lambda s: int(s, 0),
         required=True,
-        help="word table; sound_play indexes id 1 as the first entry",
+        help="word table; play indexes id 1 as the first entry",
     )
     ap.add_argument("--sfx", action="store_true")
     ap.add_argument("--id", type=lambda s: int(s, 0))

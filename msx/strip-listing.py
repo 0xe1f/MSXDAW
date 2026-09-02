@@ -23,7 +23,7 @@ a real comment we added (kept). They are distinguished structurally: z80dasm's
 ASCII art is space-separated single characters (e.g. ". .", "! . L", ">"), while
 our comments start with ";" and contain at least one multi-character word.
 
-Usage:  tools/disasm/strip-listing.py <file.asm> [more.asm ...]      (edits in place)
+Usage:  tools/workbench/msx/strip-listing.py <file.asm> [more.asm ...]      (edits in place)
 """
 import re, sys
 

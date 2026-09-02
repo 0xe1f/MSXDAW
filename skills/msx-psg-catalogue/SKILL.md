@@ -15,11 +15,11 @@ WAV is preview only. Compressed / labelled `.asm` bytes stay authoritative
 
 | Driver | Player | Typical layout |
 |--------|--------|----------------|
-| 6-byte music-rec (Vampire Killer `sound_tick`) | `konami/psgplay.py` | 3 PSG channels |
-| 18-byte packed header, 8 slots (King's Valley II) | `konami/sccplay.py` | 3 PSG + 5 SCC |
+| 6-byte music-rec | `konami/psgplay.py` | 3 PSG channels |
+| 18-byte packed header, 8 slots | `konami/sccplay.py` | 3 PSG + 5 SCC |
 | 5-byte rec + 2 slots (Taito `psg_play` / `psg_tick`) | `msx/taitoplay.py` | 2 PSG slots |
 
-Do not point the VK player at an 18-byte header table, or either Konami
+Do not point the 6-byte player at an 18-byte header table, or either Konami
 player at Taito `psg_play` streams. Catalogue **names** and default output
 dirs stay in the game wrapper. No extra audio libraries.
 
@@ -31,7 +31,7 @@ dirs stay in the game wrapper. No extra audio libraries.
 | `sfx/` | one-shot effects (`{id}_{name}.wav`) |
 
 Do not mix the two. Id is **2 uppercase hex digits**, then an underscore and a
-short stem from the call site (`05_bgm_stage`, `3C_fall`). Rename the WAV when
+short stem from the call site (`05_bgm_stage`, `1A_jump`). Rename the WAV when
 the call site is named.
 
 ## Regeneration

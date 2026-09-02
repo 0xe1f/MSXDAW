@@ -144,4 +144,5 @@ render both. Watch the RAM the feature is supposed to fill.
 
 Reuse `regen-bank.sh` and `romscan.py`. Don’t grep leftover `.bin` or write
 ad-hoc xref python. Runtime tracing: `msx-cocoamsx`. Early code/data split
-(`.blocks`, bank roles, illegal-sequence seeds): `msx-code-data`.
+(`.blocks`, bank roles, illegal-sequence seeds): `msx-code-data`. Coverage
+badges are CI-published (`msx-coverage`); do not rewrite README numbers.

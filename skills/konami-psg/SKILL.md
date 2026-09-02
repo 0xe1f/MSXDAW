@@ -17,26 +17,26 @@ Taito carts (`psg_play` / 5-byte records / two slots) use
 
 Two in-house Konami drivers; pick the player that matches the header:
 
-## 6-byte music-rec (Vampire Killer)
+## 6-byte music-rec
 
-3 PSG channels. `play_sound` copies a 20-byte template per channel.
+3 PSG channels. The driver copies a 20-byte template per channel.
 
 ```
-tools/workbench/konami/psgplay.py Game.rom --map 14@8000,15@a000 \
-    --music-ptr 0x8DC9 --sfx-ptr 0x8D8D \
-    --env-ptr 0xAAD6 --env-alt 0xAAEE --note-tbl 0x8B81 \
-    --music-ids 0x80-0x8E
+tools/workbench/konami/psgplay.py Game.rom --map 2@8000,3@a000 \
+    --music-ptr <cpu> --sfx-ptr <cpu> \
+    --env-ptr <cpu> --env-alt <cpu> --note-tbl <cpu> \
+    --music-ids <range>
 ```
 
-## 18-byte packed header (King's Valley II / SCC)
+## 18-byte packed header (SCC)
 
-8 slots (3 AY + 5 SCC). `sound_play` copies 18 bytes from `ptr[id*2]`; packed
+8 slots (3 AY + 5 SCC). Play copies 18 bytes from `ptr[(id-1)*2]`; packed
 header is `db flags, pri` then one `dw` per SET bit (bit 7 first). Channel
-bytecode is not the VK opcode set.
+bytecode is not the 6-byte opcode set.
 
 ```
-tools/workbench/konami/sccplay.py Game.rom --map 4@6000,5@8000,6@A000 \
-    --ptr 0x6F2E --id 5
+tools/workbench/konami/sccplay.py Game.rom --map 1@6000,2@8000,3@A000 \
+    --ptr <cpu> --id 1
 ```
 
 SCC enable is `ld a,3Fh / ld (9000h),a`; wavetable copy is 32 bytes into

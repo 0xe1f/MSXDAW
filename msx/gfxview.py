@@ -22,21 +22,21 @@ Two pixel formats:
       8x8   tile/sprite pattern : 8 bytes, one byte per row.
       16x16 sprite pattern      : 32 bytes, four 8x8 quadrants ordered
                                   TL(0..7) BL(8..15) TR(16..23) BR(24..31).
-  --bpp 4  4 bits per pixel, high nibble = left pixel (SCREEN 5/7 bitmaps, which
-           is what Vampire Killer uses).  Each pixel prints as its colour index
-           0-F, with colour 0 shown as '.' (transparent/background).
+  --bpp 4  4 bits per pixel, high nibble = left pixel (SCREEN 5/7 bitmaps).
+           Each pixel prints as its colour index 0-F, with colour 0 shown as
+           '.' (transparent/background).
       A NxN tile is N rows of N/2 bytes, stored top-to-bottom (no quadrants).
 
   --raw    Treat the region as a linear bitmap --width pixels wide and --rows
            tall (best for whole loaded images rather than tile arrays).
 
 Usage:
-  tools/disasm/gfxview.py <file> <hex-offset> [--count N] [--size 8|16]
+  tools/workbench/msx/gfxview.py <file> <hex-offset> [--count N] [--size 8|16]
                    [--cols C] [--bpp 1|4] [--raw --width W --rows R]
 
 Examples:
-  tools/disasm/gfxview.py VampireKiller.rom 0x8000 --bpp 4 --size 16 --count 8 --cols 8
-  tools/disasm/gfxview.py VampireKiller.rom 0x8000 --bpp 4 --raw --width 64 --rows 32
+  tools/workbench/msx/gfxview.py Game.rom 0x8000 --bpp 4 --size 16 --count 8 --cols 8
+  tools/workbench/msx/gfxview.py Game.rom 0x8000 --bpp 4 --raw --width 64 --rows 32
 """
 import argparse
 

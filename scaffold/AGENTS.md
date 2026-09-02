@@ -13,7 +13,7 @@ This is an [MSXDAW](https://github.com/) game repo (MSX Disassembly Workbench).
 An original ROM dump is not required to assemble or verify.
 
 **End state.** Every ROM byte is labelled `.asm`. Leftover `INCBIN` is scaffold
-only (`msx-code-data`).
+only (`msx-code-data`). Coverage badges: `msx-coverage` (CI, not README tables).
 
 Default source split is **one file per 8 KiB mapper bank** (`banks/bank00.asm`)
 until paging helpers are named. Then combine banks this cart maps together

@@ -20,7 +20,7 @@ extra.
 ## When to use this vs static analysis
 
 Use CocoaMSX when you need **live** behaviour: what a RAM byte does, which
-PC writes it, what happens after a whip / room change / death. Prefer
+PC writes it, what happens after a shot / room change / death. Prefer
 `romscan` / reading `.asm` when the question is "who calls this" or "what is
 this table". Snapshots find *where*; a tight WATCH finds the *writer PC*;
 xref finds callers.
@@ -31,13 +31,13 @@ xref finds callers.
 tools/workbench/cocoamsx/tools/disasm/build-cocoamsx.sh
 tools/workbench/cocoamsx/tools/disasm/trace-run.sh
 COCOAMSX_ROM2=/path/to/GameMaster.rom tools/workbench/cocoamsx/tools/disasm/trace-run.sh
-tools/workbench/cocoamsx/tools/disasm/cocoamsx-ctl peek c425
+tools/workbench/cocoamsx/tools/disasm/cocoamsx-ctl peek c000
 tools/workbench/cocoamsx/tools/disasm/snapdiff.py generated/disasmsnap.bin
 ```
 
 `trace-run.sh` finds the game via `workbench.cfg` (cwd or `GAME=`). Pass a ROM
 path to override. `COCOAMSX_ROM2` inserts a second cartridge in slot 2 before
-the startup ROM boots (Vampire Killer + Game Master).
+the startup ROM boots (game + a slot-2 companion cart).
 
 **Never kill a running emulator** (`kill`, `pkill`, closing the window)
 unless the user asks. They are often mid-recording.
@@ -72,11 +72,11 @@ Do not TAS from the Konami logo. Named savestates live in the **game** repo
 (`generated/` or `research/*.sta`):
 
 ```
-cocoamsx-ctl savestate generated/s3r5-bat.sta
-cocoamsx-ctl loadstate generated/s3r5-bat.sta
+cocoamsx-ctl savestate generated/scene.sta
+cocoamsx-ctl loadstate generated/scene.sta
 ```
 
-Game Master / RAM poke only when a state is missing. The human can still
+Trainer cart / RAM poke only when a state is missing. The human can still
 play in the window; the agent should load a state and observe.
 
 ## Observe
@@ -85,10 +85,10 @@ Snapshots first, then a tight watch:
 
 1. `snap` (or F9) before an action, `snap` after. F8 / `autosnap on` for a
    per-frame recording (red dot in the corner).
-2. `snapdiff.py generated/disasmsnap.bin` / `--track c417` to see which
+2. `snapdiff.py generated/disasmsnap.bin` / `--track c000` to see which
    bytes moved.
-3. `watch c417` and repeat the action for the writer PC (`W ss:pppp aaaa=vv`).
-4. `peek c425` / `dump c800 80` / `wait c401 == 05` when you already know the
+3. `watch c000` and repeat the action for the writer PC (`W ss:pppp aaaa=vv`).
+4. `peek c000` / `dump c000 80` / `wait c000 == 05` when you already know the
    address. `screenshot /tmp/frame.png` when RAM is ambiguous.
 
 Keep `DEDUP=1`. Do not broad-EXEC; it explodes the log. Changing WATCH no
@@ -106,12 +106,12 @@ chain):
 cocoamsx-ctl key down space
 cocoamsx-ctl key up space
 cocoamsx-ctl hold right 30
-cocoamsx-ctl wait c425 == 80
+cocoamsx-ctl wait c000 == 80
 cocoamsx-ctl snap
 ```
 
 Names: `up down left right space shift ctrl alt z x a s enter esc tab f8 f9`.
-Use this for "whip once", not for crossing a stage.
+Use this for "fire once", not for crossing a stage.
 
 ## cocoamsx-ctl cheat sheet
 
@@ -121,10 +121,10 @@ line out (`ok …` / `err …`).
 | command | effect |
 |---------|--------|
 | `ping` | `ok pong` |
-| `peek c425` | one byte |
-| `dump c800 80` | hex bytes (len hex or decimal) |
-| `watch c400-c41f` | live WATCH ranges (same grammar as env) |
-| `exec 44f5-4500` | live EXEC ranges |
+| `peek c000` | one byte |
+| `dump c000 80` | hex bytes (len hex or decimal) |
+| `watch c000-c01f` | live WATCH ranges (same grammar as env) |
+| `exec 4000-4010` | live EXEC ranges |
 | `snap` | one RAM snapshot (same file as F9) |
 | `autosnap on\|off` | per-frame snapshots (F8) |
 | `wait addr == xx [ms]` | block until RAM matches (default 30s) |

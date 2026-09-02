@@ -3,9 +3,9 @@ name: msx-scaffold
 description: >-
   Create a new MSXDAW game repo from a ROM dump: probe mapper and size,
   run bin/scaffold, wire the workbench submodule, LICENSE/README/CI,
-  sjasmplus, then hand off to msx-bootstrap. Use when starting a second
-  cart, scaffolding a new disassembly, or the user asks for a repo like
-  King's Valley II / Vampire Killer.
+  sjasmplus, then hand off to msx-bootstrap. Use when starting a new
+  cart, scaffolding a new disassembly, adding GitHub verify CI, or a
+  verify badge on the README.
 ---
 
 # New MSXDAW game repo
@@ -36,8 +36,8 @@ is not Konami4.
 ASCII8 unique ports: `6800` / `7800`. Konami SCC unique: `5000` / `9000` /
 `B000`. Konami4 unique: `8000` / `A000` on a cart larger than 32 KiB.
 
-Dest directory: `~/code/<game>` (lowercase), `--name` PascalCase like
-`Arkanoid` / `KingsValley2`.
+Dest directory: `~/code/<game>` (lowercase), `--name` PascalCase
+(`SomeGame`).
 
 ## Scaffold
 
@@ -56,7 +56,7 @@ tools/workbench/bin/scaffold ~/code/<game> \
 8 KiB bins, and (if `--banks` omitted) sets bank count from file size.
 `--mapper` omitted + 4 or fewer banks → `linear`. `--url` omitted → GitHub
 unless dest is a sibling of a standalone DAW clone. **Never** submodule a
-nested `kingsvalley2/tools/workbench` path.
+nested `some-game/tools/workbench` working copy.
 
 ## After scaffold (same session)
 
@@ -74,12 +74,27 @@ nested `kingsvalley2/tools/workbench` path.
    same pin.
 4. `cocoamsx.json` from `tools/workbench/cocoamsx/cocoamsx.json.example`.
    Pick `MSX - C-BIOS` vs `MSX2 - C-BIOS` from the cart generation.
-5. `.github/workflows/verify.yml` — `tools/workbench/bin/install-sjasmplus`,
-   `make verify`, delete the assembled ROM. Parameterize the `.rom` name.
-6. `NOTICE` copyright line: original publisher + year. Apache covers
+5. GitHub verify CI — scaffold copies `.github/workflows/verify.yml`.
+   If this repo already exists, copy
+   `tools/workbench/scaffold/github/workflows/verify.yml` and replace
+   `__GAME__` with the `workbench.cfg` `name` (the assembled `Name.rom`).
+   Two jobs: **verify** inlines sjasmplus **v1.24.0** (no workbench
+   submodule); **coverage** sparse-clones workbench `msx/` + `lib/` and
+   force-pushes Shields.io JSON to an orphan `badges` branch on the
+   default branch (`msx-coverage`). `permissions: contents: read` at
+   workflow level; the coverage job sets `contents: write`. Delete the
+   assembled ROM after `make verify`.
+6. Badges on `README.md`, first lines after the title. Infer `owner/repo`
+   from `git remote get-url origin` (GitHub SSH or HTTPS). Do not invent
+   a slug. If there is no GitHub origin yet, skip badges and add them
+   when origin exists. Verify badge plus three endpoint badges (in
+   source / named / comments) pointing at
+   `raw.githubusercontent.com/owner/repo/badges/…`. Do not put a live
+   coverage table in README — CI updates the `badges` branch.
+7. `NOTICE` copyright line: original publisher + year. Apache covers
    **our** comments and structure only.
-7. `bin/install-skills` (scaffold already runs it).
-8. `make verify` on the `INCBIN` scaffold. Never leave it red.
+8. `bin/install-skills` (scaffold already runs it).
+9. `make verify` on the `INCBIN` scaffold. Never leave verify red.
 
 Then **`msx-bootstrap`**: regen **bank 0** only, name `AB` / init / `H.TIMI`
 / pager (if any). Stop. No window files until this cart’s pager is named.
@@ -93,9 +108,8 @@ Linear carts have no pager — do not apply `konami-msx-disasm` window merge.
 - `git commit` unless the user asks.
 - Invent ASCII vs Konami from entropy or from a different game’s notes.
 
-## Example (Taito Arkanoid, 32 KiB)
+## Example (32 KiB linear)
 
-Dump: `~/emu/MSX/Carts/Other/Arkanoid.rom`. Probe should report **linear**, 4
-banks, `AB` at file offset 0. Dest `~/code/arkanoid`, `--name Arkanoid`.
-MSX1 + paddle (Vaus). No Konami window files. After `make verify` on INCBINs,
-`msx-bootstrap` regen bank 0 only.
+Probe should report **linear**, 4 banks, `AB` at file offset 0. Dest
+`~/code/<game>`, `--name` from the title. No Konami window files. After
+`make verify` on INCBINs, `msx-bootstrap` regen bank 0 only.

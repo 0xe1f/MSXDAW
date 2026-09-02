@@ -3,10 +3,12 @@
 ![logo](docs/daw.png)
 
 Tools, skills, and templates for **byte-exact** Z80 disassemblies of MSX / MSX2
-MegaROMs.
+ROMs and MegaROMs.
 
-Game repos (Vampire Killer, King's Valley II, …) consume this tree as the git
-submodule `tools/workbench`.
+Game repos consume this tree as the git submodule `tools/workbench`.
+
+This project started as tooling for a Vampire Killer disassembly;
+the workbench itself is designed to be cart-agnostic.
 
 ## Layout
 
@@ -19,9 +21,10 @@ submodule `tools/workbench`.
 | `bin/scaffold` | New game repo (skill `msx-scaffold`; probe first) |
 | `bin/add-skill` / `bin/install-skills` | Skills + project `.cursor/skills` symlinks |
 | `bin/install-sjasmplus` | Clone/build z00m128/sjasmplus **v1.24.0** → game `tools/sjasmplus` (skill `msx-scaffold`) |
+| `msx/coverage.py` | Disassembly progress; CI badges (`make coverage`, skill `msx-coverage`) |
 | `cocoamsx/` | Research display: CALayer present, JSON config, control socket (`tools/disasm/`, skill `msx-cocoamsx`) |
 | `skills/` | Generic agent skills (no ROM-specific addresses). New repo: `msx-scaffold`. After bootstrap, `msx-code-data` |
-| `scaffold/` | Templates copied by `bin/scaffold` |
+| `scaffold/` | Templates copied by `bin/scaffold` (includes `.github/workflows/verify.yml`) |
 
 ## Vocabulary
 
@@ -35,7 +38,8 @@ submodule `tools/workbench`.
 ## Placement
 
 If a helper would apply to a second MSX/Konami cart, it lives here. If it names
-one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo.
+one ROM’s stems, RAM, banks, or dumpers, it stays in that game repo. Skills and
+tool docs do not name individual game repos.
 
 ## Skills
 

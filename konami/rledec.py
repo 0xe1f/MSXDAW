@@ -13,8 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Decompress a Konami MSX graphics RLE stream (VK: VRAM loader rle_dec /
-rle_dec_addr at 0x46F2 in segment 0) into a flat binary.
+"""Decompress a Konami MSX graphics RLE stream into a flat binary.
 
 Control-byte grammar (source is read linearly; the decompressed bytes are
 written to a moving VRAM pointer):
@@ -25,14 +24,14 @@ written to a moving VRAM pointer):
 
 The loader is entered with an initial VRAM destination (the caller's HL), so
 pass it with --dest.  The output .bin is the contiguous VRAM region that was
-written, so it can be fed straight to tools/disasm/gfxview.py.
+written, so it can be fed straight to tools/workbench/msx/gfxview.py.
 
 Usage:
-  tools/disasm/rledec.py <romfile> <src-hex-offset> [--dest 0xF800] [--out out.bin]
+  tools/workbench/konami/rledec.py <romfile> <src-hex-offset> [--dest 0xF800] [--out out.bin]
 
-Example (Simon/enemy sprite patterns, seg13 @ file 0x1A319 -> VRAM 0xF800):
-  tools/disasm/rledec.py VampireKiller.rom 0x1A319 --dest 0xF800 --out /tmp/spr.bin
-  tools/disasm/gfxview.py /tmp/spr.bin 0 --bpp 1 --size 16 --count 16 --cols 8
+Example:
+  tools/workbench/konami/rledec.py Game.rom 0xNNNN --dest 0xF800 --out /tmp/spr.bin
+  tools/workbench/msx/gfxview.py /tmp/spr.bin 0 --bpp 1 --size 16 --count 16 --cols 8
 """
 import argparse
 

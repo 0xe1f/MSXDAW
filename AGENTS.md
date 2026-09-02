@@ -4,6 +4,8 @@ MSX Disassembly Workbench. Game repos vendor this tree as `tools/workbench`.
 
 **Placement:** generic MSX / shared Konami formats → this repo. ROM-specific
 stems, RAM maps, bank windows, dumpers → the game’s `tools/` and `.agents/skills/`.
+Do not name individual game repos in skills or tool docs (README origin line
+excepted). CLI examples use placeholders, not a cart’s addresses or stems.
 
 **Banks, not segments.** Scaffold is one `banks/bankNN.asm` per 8 KiB. Once
 paging helpers show which banks are mapped together, combine those into one
@@ -27,10 +29,12 @@ stale workbench links after a rename or delete. Never `~/.cursor/skills`.
 Missing assembler: `bin/install-sjasmplus` (`msx-scaffold`). Agents in a
 game repo must follow `tools/workbench/skills/` in addition to the game’s
 `.agents/skills/`. Run `bin/install-skills` after pulling workbench when
-skills were added or removed. WAV catalogues (`make music` / `make sfx`)
-follow `msx-psg-catalogue`. Konami renderers are `konami-psg`; Taito
-`psg_play` is `msx/taitoplay.py`. Catalogue AY generators match CocoaMSX
-`AY8910.c` (in `konami/psgplay.py`).
+skills were added or removed. New repo CI + verify badge: `msx-scaffold`
+(template `scaffold/github/workflows/verify.yml`). Coverage badges:
+`msx-coverage` (`msx/coverage.py`, Shields.io `badges` branch). WAV catalogues
+(`make music` / `make sfx`) follow `msx-psg-catalogue`. Konami renderers
+are `konami-psg`; Taito `psg_play` is `msx/taitoplay.py`. Catalogue AY
+generators match CocoaMSX `AY8910.c` (in `konami/psgplay.py`).
 
 **Docs:** record changes to this tree (tools, skills, `cocoamsx/`) **here** —
 this file, `README.md`, `skills/<name>/SKILL.md`, and the tool’s own README

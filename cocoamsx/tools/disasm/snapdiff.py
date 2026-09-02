@@ -2,7 +2,7 @@
 """Diff RAM snapshots captured by the disasmtrace F9 hotkey.
 
 The emulator writes each F9 press as a record to the snapshot file (default
-$VK/generated/disasmsnap.bin):
+$GAME/generated/disasmsnap.bin):
 
     'S', seq(u32 LE), base(u16 LE), len(u16 LE), then <len> raw bytes.
 
@@ -12,7 +12,7 @@ Typical use: capture once before an action and once after, then
 
 which lists every byte that changed between consecutive snapshots as
 "addr: old -> new".  Pick specific snapshots with -a/-b, and restrict the view
-to a range with -r (e.g. -r c400-c4ff).
+to a range with -r (e.g. -r c000-c0ff).
 """
 import argparse
 import struct
