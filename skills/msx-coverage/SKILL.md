@@ -30,8 +30,8 @@ a slug.
 ```
 [![in source](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/in-source.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
 [![named](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/named.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
-[![comments](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/commented.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
-[![subs](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/subs.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
+[![op comments](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/op-comments.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
+[![sub comments](https://img.shields.io/endpoint?style=flat&url=https://raw.githubusercontent.com/owner/repo/badges/sub-comments.json)](https://github.com/owner/repo/actions/workflows/verify.yml)
 ```
 
 CI (`msx-scaffold` workflow) sparse-clones workbench `msx/` + `lib/`, runs
@@ -48,14 +48,14 @@ endpoint badges are in place.
 |---|---|---|
 | **in source** | ROM bytes not behind `INCBIN` / leftover `.bin` | every ROM byte is `.asm` |
 | **named** | unique remaining `lXXXXh` / `sub_XXXXh` **definitions** (countdown) | no z80dasm auto labels |
-| **comments** | instruction lines with a `;` comment | long tail; not a merge gate |
-| **subs** | named `call` targets with a comment block immediately above | every called routine has docs |
+| **op comments** | instruction lines with a `;` comment | long tail; not a merge gate |
+| **sub comments** | named `call` targets with a comment block immediately above | every called routine has docs |
 
-A sub is a named label that is a `call` target and whose next real line is
-an opcode (`lXXXXh` / BIOS `equ` / tables do not count). **+1** if the
-lines above it (skipping blanks and `====` rules) include a `;` comment
+A counted sub is a named label that is a `call` target and whose next real
+line is an opcode (`lXXXXh` / BIOS `equ` / tables do not count). **+1** if
+the lines above it (skipping blanks and `====` rules) include a `;` comment
 with a letter; **+0** otherwise. A trailing `;` on the label line is not
-docs. `jp` / `jr` locals are not subs.
+docs. `jp` / `jr` locals are not counted.
 
 Do not put a single “N% disassembled” figure on the README. Do not
 hero-number `msx.sym` size. `defb` / `defw` / `INCBIN` are not opcodes.

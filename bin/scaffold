@@ -216,8 +216,8 @@ if [ -n "$origin" ]; then
     badge="[![verify](${actions}/badge.svg)](${actions})
 [![in source](${ep}/in-source.json)](${actions})
 [![named](${ep}/named.json)](${actions})
-[![comments](${ep}/commented.json)](${actions})
-[![subs](${ep}/subs.json)](${actions})
+[![op comments](${ep}/op-comments.json)](${actions})
+[![sub comments](${ep}/sub-comments.json)](${actions})
 "
   fi
 fi

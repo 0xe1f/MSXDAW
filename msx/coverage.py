@@ -360,11 +360,11 @@ def badge_payloads(stats: dict) -> dict[str, dict]:
         "named.json": shields_endpoint(
             "named", f"{auto} left", _named_color(auto)
         ),
-        "commented.json": shields_endpoint(
-            "comments", f"{pct:g}%", _comment_color(pct)
+        "op-comments.json": shields_endpoint(
+            "op comments", f"{pct:g}%", _comment_color(pct)
         ),
-        "subs.json": shields_endpoint(
-            "subs",
+        "sub-comments.json": shields_endpoint(
+            "sub comments",
             f"{stats['subs_doc']} / {stats['subs']}",
             _comment_color(stats["subs_pct"]),
         ),
@@ -385,8 +385,8 @@ def render(stats: dict) -> str:
     lines = [
         f"In source: {lab_k} / {rom_k} KiB labelled `.asm`",
         f"Named: {stats['auto_labels']} auto labels left",
-        f"Commented: {stats['comment_pct']:g}% of opcode lines",
-        f"Subs: {stats['subs_doc']} / {stats['subs']} preceded by docs",
+        f"Op comments: {stats['comment_pct']:g}% of opcode lines",
+        f"Sub comments: {stats['subs_doc']} / {stats['subs']} preceded by docs",
     ]
     rows = [
         w
@@ -397,7 +397,7 @@ def render(stats: dict) -> str:
     ]
     if rows:
         lines.append("")
-        lines.append("| Window | INCBIN | Auto left | Subs |")
+        lines.append("| Window | INCBIN | Auto left | Sub comments |")
         lines.append("|---|---|---|---|")
         for w in rows:
             inc = f"{_kib(w['incbin'])} KiB" if w["incbin"] else "—"

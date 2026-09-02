@@ -87,8 +87,8 @@ nested `some-game/tools/workbench` working copy.
 6. Badges on `README.md`, first lines after the title. Infer `owner/repo`
    from `git remote get-url origin` (GitHub SSH or HTTPS). Do not invent
    a slug. If there is no GitHub origin yet, skip badges and add them
-   when origin exists. Verify badge plus three endpoint badges (in
-   source / named / comments) pointing at
+   when origin exists. Verify badge plus four endpoint badges (in
+   source / named / op comments / sub comments) pointing at
    `raw.githubusercontent.com/owner/repo/badges/…`. Do not put a live
    coverage table in README — CI updates the `badges` branch.
 7. `NOTICE` copyright line: original publisher + year. Apache covers
