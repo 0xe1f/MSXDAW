@@ -36,10 +36,14 @@ skills were added or removed. New repo CI + verify badge: `msx-scaffold`
 are `konami-psg`; Taito `psg_play` is `msx/taitoplay.py`. Catalogue AY
 generators match CocoaMSX `AY8910.c` (in `konami/psgplay.py`).
 
-**Docs:** record changes to this tree (tools, skills, `cocoamsx/`) **here** —
-this file, `README.md`, `skills/<name>/SKILL.md`, and the tool’s own README
-(`cocoamsx/tools/disasm/README.md` for the research display). A game’s
-`docs/progress.md` is ROM findings only; do not dump emulator how-to there.
+**Docs:** `docs/tools/<tool>.md` is the human reference for a standalone
+helper’s task, syntax, arguments, outputs, and operational failures. Agent
+workflow and methodology stay in `skills/<name>/SKILL.md`; repository policy
+and navigation stay in this file and `README.md`. CocoaMSX keeps its subsystem
+README at `cocoamsx/tools/disasm/README.md`. Record changes to this tree
+(tools, skills, `cocoamsx/`) in the corresponding workbench docs. A game’s
+`docs/progress.md` is ROM findings only; do not dump tool or emulator how-to
+there.
 
 When adding a tool, weigh it: second cart would use it → here; only this ROM →
 the game.

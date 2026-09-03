@@ -26,6 +26,16 @@ the workbench itself is designed to be cart-agnostic.
 | `skills/` | Generic agent skills (no ROM-specific addresses). New repo: `msx-scaffold`. After bootstrap, `msx-code-data` |
 | `scaffold/` | Templates copied by `bin/scaffold` (includes `.github/workflows/verify.yml`) |
 
+## Documentation
+
+[`docs/README.md`](docs/README.md) is the human reference for standalone
+workbench helpers. It describes the task each helper performs, its
+prerequisites, exact syntax and options, expected outputs, and practical
+failure modes.
+
+Agent-facing methodology remains in `skills/`. CocoaMSX research-display
+operation remains in `cocoamsx/tools/disasm/README.md`.
+
 ## Vocabulary
 
 - **Bank** — 8 KiB mapper unit. Scaffold: one `banks/bankNN.asm`. After the
