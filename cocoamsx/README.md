@@ -17,6 +17,7 @@ path are stripped or unhooked on purpose.
 - Unix socket + `tools/disasm/cocoamsx-ctl` (peek, watch, snap, keys, savestate)
 - `DISASMTRACE` (F8/F9 RAM snapshots, EXEC/WATCH logs)
 - Window-focused AppKit keys only (no Input Monitoring)
+- Emulation keeps running in the background (stock pause-when-unfocused is off)
 
 Build, launch, and control: **[tools/disasm/README.md](tools/disasm/README.md)**.
 Agent skill: `msx-cocoamsx`. Further emulator changes are documented there and

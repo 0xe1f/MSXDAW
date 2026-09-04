@@ -214,8 +214,6 @@
 	
 	NSOpenPanel *currentlyActiveOpenPanel;
 	NSArray *currentlySupportedFileTypes;
-	
-	BOOL pausedDueToLostFocus;
 }
 
 #define WIDTH_DEFAULT   544.0
@@ -233,7 +231,6 @@ CMEmulatorController *theEmulator = nil; // FIXME
     if ((self = [super initWithWindowNibName:@"Emulator"]))
     {
         listOfPreferenceKeysToObserve = [[NSArray alloc] initWithObjects:
-                                         @"pauseWhenUnfocused",
                                          @"emulationSpeedPercentage",
                                          @"enableFloppyTiming",
                                          @"videoBrightness",
@@ -375,8 +372,6 @@ CMEmulatorController *theEmulator = nil; // FIXME
     theEmulator = self; // FIXME
     
     [self setIsInitialized:NO];
-    
-    pausedDueToLostFocus = NO;
     
     properties = NULL;
     video = NULL;
@@ -665,7 +660,6 @@ CMEmulatorController *theEmulator = nil; // FIXME
 		
 		emulatorStart([state UTF8String]);
 		
-		// Pause if not focused
 		[self windowKeyDidChange:[[self activeWindow] isKeyWindow]];
 	}
 }
@@ -1818,27 +1812,6 @@ CMEmulatorController *theEmulator = nil; // FIXME
 {
     [mouse setEmulatorHasFocus:isKey];
     [input setEmulatorHasFocus:isKey];
-    
-    BOOL pauseWhenUnfocused = [[NSUserDefaults standardUserDefaults] boolForKey:@"pauseWhenUnfocused"];
-    
-    if ([self isStarted])
-    {
-        if (isKey)
-        {
-            if ([self isPaused] && pausedDueToLostFocus)
-                [self resume];
-            
-            pausedDueToLostFocus = NO;
-        }
-        else
-        {
-            if (![self isPaused] && pauseWhenUnfocused)
-            {
-                [self pause];
-                pausedDueToLostFocus = YES;
-            }
-        }
-    }
 }
 
 - (BOOL)isLionFullscreenAvailable
@@ -2682,11 +2655,6 @@ void archTrap(UInt8 value)
                         change:(NSDictionary *)change
                        context:(void *)context
 {
-    if ([keyPath isEqualToString:@"pauseWhenUnfocused"])
-    {
-        [self windowKeyDidChange:[[self activeWindow] isKeyWindow]];
-    }
-    
     if ([self isInitialized])
     {
         if ([keyPath isEqualToString:@"emulationSpeedPercentage"])

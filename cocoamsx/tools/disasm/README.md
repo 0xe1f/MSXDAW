@@ -54,6 +54,9 @@ opens (credits wrap used to recurse until SIGSEGV; guarded in
 
 ## Socket gotchas
 
+- Emulation does not pause when the window is in the background (the
+  stock “Pause when another window is active” pref is ignored). Explicit
+  `cocoamsx-ctl pause` still stops the CPU.
 - `peek` / `dump` / `wait` complete on the **next opcode fetch**. `pause`
   then peek deadlocks (paused CPU never fetches). Resume first, or
   screenshot without peeking.

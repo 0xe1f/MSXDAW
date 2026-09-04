@@ -142,7 +142,7 @@
                                         <button misplaced="YES" id="3744">
                                             <rect key="frame" x="272" y="397" width="270" height="18"/>
                                             <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMinY="YES"/>
-                                            <buttonCell key="cell" type="check" title="Pause when another window is active" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="3745">
+                                            <buttonCell key="cell" type="check" title="Pause when another window is active" bezelStyle="regularSquare" imagePosition="left" state="off" inset="2" id="3745">
                                                 <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
                                                 <font key="font" metaFont="system"/>
                                             </buttonCell>

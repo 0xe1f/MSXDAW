@@ -34,9 +34,21 @@ catalogue cell (that is a composite sheet).
 Typical atoms: 8×8 4bpp tile (32 bytes); 16×16 4bpp; 16×16 1bpp sprite plane
 (32 bytes); 8×8 1bpp glyph (8 bytes); 3-byte palette record as an 8×8 swatch.
 
+## Palette
+
+On-pixels use the VDP index the game writes for that atom when it is on
+screen: SAT colour low nibble, `copy_tiles` C (on = low, off = high), dest
+nibbles. Load that object’s `palette_list` (or the play palette it shares).
+Do not pick an unused slot, even/odd pair, or greyscale as a preview ink.
+
+Hardware sprites are usually two SAT colour planes (a CC pair). Keep **one
+plane per cell**. Paint plane 0 with the first colour and plane 1 with the
+second. Do not overlay the pair (the VDP ORs indices; a catalogue cell is
+one plane).
+
 Transparent / unused pixels are a visible off-colour so cell bounds stay
-readable. Index 0 stays off except on palette sheets, which paint the table’s
-own RGB.
+readable. That off-colour is not a palette index. Index 0 stays off except
+on palette sheets, which paint the table’s own RGB.
 
 ## Header
 
@@ -57,7 +69,3 @@ reuse a dest every stream shares.
 `gfx/<kind>/<stem>.png` ↔ `banks/data/<stem>.asm`. Create that dir on the
 first peel (`msx-code-data`), not for a sheet that has no asm yet. Add /
 rename / delete the asm → the PNG goes with it. `make gfx` regenerates.
-
-Paint with the VDP palette the game uses when that object is on screen. Do not
-invent even/odd inks or greyscale stand-ins. Do not CC-overlay two SAT planes
-on a catalogue sheet (overlap is OR of colour indices).

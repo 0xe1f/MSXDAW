@@ -139,6 +139,9 @@ line out (`ok …` / `err …`).
 
 ## Gotchas
 
+- Emulation **does not pause** when the window is in the background.
+  `peek` / `dump` / `wait` work without focusing the window. Explicit
+  `cocoamsx-ctl pause` still stops the CPU.
 - **`pause` then `peek`/`dump`/`wait` deadlocks.** Those verbs wait for the
   next opcode fetch; a paused CPU never fetches. `resume` first, or
   `screenshot` without peeking.
