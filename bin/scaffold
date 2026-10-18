@@ -179,7 +179,8 @@ fi
 cp "$DAW/scaffold/Makefile" "$dest/Makefile"
 cp "$DAW/scaffold/gitignore" "$dest/.gitignore"
 cp "$DAW/scaffold/AGENTS.md" "$dest/AGENTS.md"
-mkdir -p "$dest/.github/workflows"
+mkdir -p "$dest/.cursor/rules" "$dest/.github/workflows"
+cp "$DAW/scaffold/cursor/rules/disassembly.mdc" "$dest/.cursor/rules/disassembly.mdc"
 cp "$DAW/scaffold/github/workflows/verify.yml" "$dest/.github/workflows/verify.yml"
 sed -i '' "s/__GAME__/${name}/g" "$dest/Makefile" "$dest/AGENTS.md" "$dest/.gitignore" \
   "$dest/.github/workflows/verify.yml"

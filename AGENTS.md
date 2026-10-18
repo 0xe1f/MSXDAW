@@ -30,8 +30,10 @@ listing (`konami-msx-disasm`).
 stale workbench links after a rename or delete. Never `~/.cursor/skills`.
 Missing assembler: `bin/install-sjasmplus` (`msx-scaffold`). Agents in a
 game repo must follow `tools/workbench/skills/` in addition to the game’s
-`.agents/skills/`. Run `bin/install-skills` after pulling workbench when
-skills were added or removed. New repo CI + verify badge: `msx-scaffold`
+`.agents/skills/`. Skill descriptions do not load those files. Each game
+repo has an always-applied `.cursor/rules/disassembly.mdc` (scaffold copies
+it) that names the skills to read before an asm edit. Run `bin/install-skills`
+after pulling workbench when skills were added or removed. New repo CI + verify badge: `msx-scaffold`
 (template `scaffold/github/workflows/verify.yml`). Coverage badges:
 `msx-coverage` (`msx/coverage.py`, Shields.io `badges` branch). WAV catalogues
 (`make music` / `make sfx`) follow `msx-psg-catalogue`. Konami renderers

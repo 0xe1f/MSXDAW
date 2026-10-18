@@ -1,0 +1,28 @@
+---
+description: Read the disassembly skills before annotating or editing ROM source
+alwaysApply: true
+---
+
+# Disassembly work
+
+Skill descriptions are not loaded on their own. Before any edit to `*.asm`,
+`*.blocks`, `ram.inc`, `workbench.cfg`, or `docs/progress.md` / `docs/game-notes.md`,
+Read these and follow them:
+
+1. `tools/workbench/skills/konami-msx-disasm/SKILL.md`
+2. `tools/workbench/skills/msx-code-data/SKILL.md`
+3. `tools/workbench/skills/msx-regen/SKILL.md` when regenerating or folding a bank
+4. `tools/workbench/skills/msx-romscan/SKILL.md` when searching for callers or tables
+5. `docs/progress.md` and `docs/game-notes.md`
+6. Every `SKILL.md` under `.agents/skills/`
+
+Game notes win on this ROM's addresses. Workbench skills stay generic.
+`make verify` after every edit.
+
+Read `msx-gfx`, `msx-gfx-sheets`, `msx-psg-catalogue`, `konami-psg`, or
+`msx-cocoamsx` when the task is graphics, sound, or tracing. Not on a naming pass.
+
+```
+# Bad: fold the next bank from memory of the pager.
+# Good: Read konami-msx-disasm, then name the resident window before that fold.
+```

@@ -5,6 +5,7 @@ This is an [MSXDAW](https://github.com/) game repo (MSX Disassembly Workbench).
 - Workbench (tools, generic skills): `tools/workbench` (git submodule of `~/code/msxdaw`).
 - Generic skills live in `tools/workbench/skills/` and are linked into this repo's `.cursor/skills/` (`tools/workbench/bin/install-skills`). After pulling workbench, re-run it so new skills are linked and removed ones are dropped. Never `~/.cursor/skills`.
 - Game-only skills live in `.agents/skills/` (`__GAME__-*` / cart-specific). Do not copy DAW skills here.
+- Before disassembly edits, follow `.cursor/rules/disassembly.mdc`. It is always applied and names the skills to read first. Skill descriptions alone do not load those files.
 
 **Placement:** if a helper would apply to a second MSX/Konami cart, put it in msxdaw. If it names this ROM’s stems, RAM, banks, or dumpers, keep it in this repo.
 
