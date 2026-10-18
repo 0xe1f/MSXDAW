@@ -20,8 +20,10 @@ required to assemble or verify.
 scaffold only. Do not mass-convert unknown blobs to opaque `db` (`msx-code-data`).
 Identified 1bpp pixel data is `defb %xxxxxxxx` as soon as it is known
 (`msx-gfx-sheets`); hex rows are not a holding form for sprites or tiles.
-Per-opcode comments (column 32) when the line is in front of you and the
-meaning is confirmed — a cheap win, not a later pass (`konami-msx-disasm`).
+Name the resident window before folding the next code window: work-RAM map,
+then a repeated `ix`/`iy` record, then high-fan-in routines. A trailing
+comment says why, on a line already being named — not a sweep of the raw
+listing (`konami-msx-disasm`).
 
 **Skills:** `bin/add-skill` (always runs `bin/install-skills`). Link each
 `skills/<name>` into the current project's `.cursor/skills/` and remove

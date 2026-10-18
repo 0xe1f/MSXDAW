@@ -31,3 +31,10 @@ origin for paged banks.
 
 No `code` xref ≠ dead: the entry may be a stored/computed pointer. Cross-bank
 `call` from the resident window into `0x8000`/`0xA000` is normal.
+
+## What to name next
+
+When a window is still full of `sub_` / `l` labels, xref the callees and
+rename the highest caller-counts first (`konami-msx-disasm`). A label with
+no `code` hit can still be a dispatch-table handler; decode that table
+before treating the target as dead.

@@ -3,8 +3,8 @@ name: konami-msx-disasm
 description: >-
   Methodology for a byte-exact, commented, reassemblable disassembly of a
   Konami MSX/MSX2 MegaROM (Konami4 / SCC and similar). Use when disassembling,
-  annotating, naming labels, or deciding whether a helper belongs in MSXDAW
-  or in the game repo.
+  annotating, naming labels, deciding what to name next, or deciding
+  whether a helper belongs in MSXDAW or in the game repo.
 ---
 
 # Konami MSX disassembly
@@ -73,14 +73,58 @@ put those overlapping addresses in `msx.sym`.
 Fold generated 8 KiB listings into the window file by hand; `make verify`.
 `.blocks` / peel: `msx-code-data`.
 
+## Naming a window
+
+A finished resident window has essentially no automatic labels (`lXXXXh`,
+`sub_XXXXh`, `loc_`). Trailing comments land on roughly a quarter of its
+code lines, and they say why. That density is the target, not the first
+pass. A comment that restates `ld a,(named_field)` adds nothing.
+
+Name the window that stays mapped (bank 0, plus the boot triplet it maps)
+before folding the next code window. That window holds the loop, the RAM
+writers, and the dispatchers. Another raw listing adds automatic labels
+and does not add names.
+
+1. **Work-RAM map.** Count `C000`–`FFFF` immediates in the folded window.
+   Map the densest contiguous bands into `banks/ram.inc` first. Name a byte
+   only when a writer and a reader agree; leave unread holes as hex. Then
+   replace those immediates once across the window. `ram.inc` stays out of
+   `msx.sym` (z80dasm would rewrite every match).
+2. **Repeated index record.** If `ix+n` / `iy+n` offsets cluster into one
+   span, that span is one record (actor slot, projectile, sound channel).
+   Name a field when two uses agree; leave the rest `field_N`. One struct
+   rewrites every offset in the window.
+3. **High fan-in routines.** `romscan xref` the automatic callees; rename
+   the ones with the most callers first. Rename that routine’s branch
+   labels in the same pass. A banner goes on the entry only: what it does,
+   and which registers or RAM are inputs. Branch targets get a short name
+   and usually no paragraph.
+4. **Symbolic dispatch.** Once those handlers have names, the inline word
+   table is `defw` of the names. `dec a` before the call means index base 1
+   (`msx-code-data`). When an index byte’s values are known, put the ids in
+   an `INCLUDE`d `.inc`, never `msx.sym`.
+5. **Split after the name exists.** A named routine may move to its own
+   file, `INCLUDE`d from the window. The filename is the chunk. Splitting a
+   window that is still `sub_` labels only scatters them.
+6. **Why-comments last**, on the routine being named. Roughly one code line
+   in four in a finished window. If a line is already in front of you and
+   the why is confirmed, write it then (column 32). Do not sweep a raw
+   listing from the top. Guessing does not count.
+
+Resident-page helpers with a unique address (`fill` routine, the dispatcher)
+may go in `msx.sym`, so the next bank’s regen emits `call` that name.
+Overlapping window labels stay out of `msx.sym`. Do not regen a window
+after step 1 has been applied in the asm: regen does not see `ram.inc` and
+writes the hex back (`msx-regen`).
+
+Low call density relative to the resident window means graphics or pointer
+tables. Leave those `INCBIN` until a consumer is named (`msx-code-data`).
+
 ## Conventions
 
 - Never leave z80dasm `;addr bytes ascii` tails in committed `.asm`.
-- Annotate per-opcode (column 32). If a line is already in front of you and
-  you have high confidence what that instruction does, leave the comment
-  on that line — a cheap win; do not save it for a later pass. Guessing
-  does not count. Rename `sub_XXXXh`/`lXXXXh` when confirmed; keep the ROM
-  address in the block header; add the name to `msx.sym`.
+- Rename `sub_XXXXh`/`lXXXXh` when confirmed; keep the ROM address in the
+  routine’s banner. What belongs in `msx.sym` is under Naming a window.
 - Casing: `UPPER_SNAKE` only for MSX BIOS and macro-like helpers (`DISPATCH_A`);
   `lower_snake` for game code/data. Numeric type ids live in `INCLUDE`d `.inc`
   files, never `msx.sym`. Jump tables stay next to their dispatcher.

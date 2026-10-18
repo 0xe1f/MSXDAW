@@ -23,7 +23,7 @@ tools/workbench/msx/regen-bank.sh <n> [origin-hex] [banks/banks_<stem>.blocks]
 `<n>` is the 8 KiB bank index (0-based). Origin defaults to `workbench.cfg`
 `bank_org`. Optional `.blocks` marks code vs data (rendering only). After
 windows exist, pass that window’s `.blocks` for every slice in the group
-(the script keeps blocks whose **start** is in this 8 KiB). How to seed it:
+(the script keeps blocks whose **start** is in this 8 KiB; z80dasm rejects a range outside the image). How to seed it:
 `msx-code-data`. Window merge: `konami-msx-disasm`. Do not regen until
 `bank_org` matches the pager.
 
@@ -50,6 +50,10 @@ Never copy the generated file over annotated source. Never commit z80dasm
    Master: `INCBIN` → `INCLUDE`.
 5. BIOS-lie audit on non-`call`/`jp`/`jr` lines. `make verify`, then
    `make banks` (drops the leftover `.bin`).
+   Do not regen a window after its `ram.inc` names have been applied in the
+   asm. `ram.inc` is kept out of `msx.sym`, so regen writes those immediates
+   back as hex. If a regen is required, re-apply the map afterward
+   (`konami-msx-disasm`).
 6. Two **windows** that share a CPU range cannot share z80dasm `lXXXXh` /
    `sub_XXXXh` names. Wrap later windows in one `MODULE` / `ENDMODULE`, or
    prefix auto labels. Do not put those addresses in `msx.sym`. Combining

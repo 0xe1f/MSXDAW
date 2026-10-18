@@ -25,8 +25,10 @@ changes rendering, never bytes. Naming: `konami-msx-disasm`. Regen: `msx-regen`.
    which banks are mapped **together**. Combine those into window files
    (`konami-msx-disasm`); do not leave a known triplet as three `bankNN.asm`.
 2. Entropy / opcode histogram is a hint (`0xCD`/`0xC3`/`0xDD` vs
-   low-entropy zero-heavy 4bpp). Mixed banks exist — do not call a map or
-   PSG-driver bank “graphics” from entropy alone.
+   low-entropy zero-heavy 4bpp). Call-opcode density is the other hint: a
+   bank whose `call` count is a small fraction of the resident window is
+   graphics or pointer tables until a consumer says otherwise. Mixed banks
+   exist — do not call a map or PSG-driver bank “graphics” from entropy alone.
 3. Seed `.blocks` from the mechanical list below. Regen **code** banks with
    the block file. Leave gfx / packed-PSG payload as `INCBIN` until the
    consumer (RLE decoder, list loader, PSG interpreter) is found, then fold
@@ -34,6 +36,10 @@ changes rendering, never bytes. Naming: `konami-msx-disasm`. Regen: `msx-regen`.
 4. After the first raw regen, grep `generated/*.raw.asm` for
    `;illegal sequence` and for nonsense `jp` / `ret cc` / `sbc a,*` runs.
    Each hit is a `.blocks` seed.
+5. Name the resident window before folding the next code window. Order is
+   `konami-msx-disasm` (Naming a window): work-RAM map, repeated `ix`/`iy`
+   record, high-fan-in routines. More raw listings add automatic labels and
+   do not add names.
 
 Do not disassemble a tileset or RLE bank as code.
 

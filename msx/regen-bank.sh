@@ -67,13 +67,44 @@ python3 "$MSX/bank_sym.py" "$bank"
 sym="generated/${stem}.z80dasm.sym"
 
 args=(-a -t -l -g "$org" -S "$sym")
-[ -n "$blocks" ] && args+=(-b "$blocks")
+# z80dasm rejects block ranges outside this 8 KiB image. A window .blocks
+# file lists every slice; keep entries whose start falls in this one.
+if [ -n "$blocks" ]; then
+  filt="$(mktemp)"
+  python3 - "$blocks" "$org" "$filt" << 'PY'
+import sys
+from pathlib import Path
+src, org_s, dest = sys.argv[1:]
+org = int(org_s, 0)
+hi = org + 8192
+lines = []
+for line in Path(src).read_text().splitlines():
+    s = line.strip()
+    if not s or s.startswith(";"):
+        lines.append(line)
+        continue
+    parts = s.split()
+    start = end = None
+    for i, p in enumerate(parts):
+        if p == "start" and i + 1 < len(parts):
+            start = int(parts[i + 1], 0)
+        elif p == "end" and i + 1 < len(parts):
+            end = int(parts[i + 1], 0)
+    if start is None:
+        continue
+    if org <= start < hi:
+        lines.append(line)
+Path(dest).write_text("\n".join(lines) + ("\n" if lines else ""))
+PY
+  args+=(-b "$filt")
+fi
 
 raw="generated/${stem}.raw.asm"
 gen="generated/${stem}.generated.asm"
 
 z80dasm "${args[@]}" "$tmpbin" -o "$raw"
 rm -f "$tmpbin"
+[ -n "${filt:-}" ] && rm -f "$filt"
 sed -i '' "s/^	org .*/; (org set by PHASE in ${master_name})/" "$raw"
 
 cp "$raw" "$gen"
