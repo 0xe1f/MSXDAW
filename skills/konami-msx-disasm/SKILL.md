@@ -120,6 +120,19 @@ writes the hex back (`msx-regen`).
 Low call density relative to the resident window means graphics or pointer
 tables. Leave those `INCBIN` until a consumer is named (`msx-code-data`).
 
+## Unused but present
+
+A slot, id, or string that a named consumer would accept, and that nothing
+in the ROM selects, stays in the source. Record it in the game repo's
+`docs/UNUSED.md` in the same edit that confirms it. Create that file on the
+first finding. One heading per finding: what the bytes are, what would
+select them, what was checked, and no claim past the bytes.
+
+This is not `unrefd_XXXX`. Those labels are bytes no traced table reaches.
+A dictionary word its table points at, and that no script index selects, is
+unused and still referenced. Do not delete it, and do not rename it to
+`unrefd_`.
+
 ## Conventions
 
 - Never leave z80dasm `;addr bytes ascii` tails in committed `.asm`.

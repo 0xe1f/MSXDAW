@@ -86,6 +86,9 @@ range check on A, or a `dec a` / `sub base` immediately before the dispatcher
 - Treat “never executed” as data. Coverage misses Game Master, credits,
   unused types. Broad `EXEC` is not a code/data map (`msx-cocoamsx`).
   Coverage **confirms** a region is code; it does not prove the rest is data.
+- Drop a well-formed entry because nothing selects it. Keep the bytes.
+  Record the finding in the game's `docs/UNUSED.md` (`konami-msx-disasm`).
+  `unrefd_XXXX` is only for bytes no traced table reaches.
 - Reuse the first packed-list decoder on the next blob in the same bank.
   A second list often has a different grammar.
 - Mass-convert an unknown bank to opaque `db`.
