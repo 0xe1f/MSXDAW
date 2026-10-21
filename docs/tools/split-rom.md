@@ -14,7 +14,7 @@ walks upward for `workbench.cfg` and changes to that root.
 - For extraction, a built ROM at the configured `rom` path or selected with
   `ROM=`.
 
-The helper uses `banks`, `bank_size`, `source_dir`, `bank_prefix`, `rom`, and
+The helper uses `banks`, `bank_size`, `source_dir`, `bank_prefix`, `bank_ids`, `rom`, and
 the optional `migrated` configuration value.
 
 ## Syntax
@@ -51,7 +51,8 @@ files for unmigrated banks are overwritten.
 A bank is considered migrated when any of these is true:
 
 - `migrated = all` or `migrated = *` in `workbench.cfg`;
-- its decimal index appears in the comma- or space-separated `migrated` list;
+- its index appears in the comma- or space-separated `migrated` list
+  (decimal, or hex when `bank_ids = hex`);
   or
 - `<source_dir>/<bank_prefix>NN.asm` exists.
 

@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -49,18 +50,33 @@ class Game:
         self.bank_size = int(cfg.get("bank_size", "8192"), 0)
         self.source_dir = cfg.get("source_dir", "banks")
         self.bank_prefix = cfg.get("bank_prefix", "bank")
+        # bank_ids = hex: ids in scan_banks / migrated / --banks are hex, and
+        # stems are <prefix>_<hh> (bank_0e, bank_01_02_03 for windows).
+        # Default dec keeps <prefix>NN with decimal ids.
+        self.bank_ids = cfg.get("bank_ids", "dec").strip().lower()
+        if self.bank_ids not in ("dec", "hex"):
+            sys.exit(f"bank_ids must be dec or hex, not {self.bank_ids!r}")
         self.sym = cfg.get("sym", f"{self.source_dir}/msx.sym")
         scan = cfg.get("scan_banks", "0,1,2,3")
-        self.scan_banks = [int(x, 0) for x in scan.split(",") if x.strip()]
+        self.scan_banks = self.parse_bank_list(scan)
         self.migrated = cfg.get("migrated", "").strip().lower()
         self._org = self._parse_org(cfg)
+
+    def parse_bank_id(self, s: str) -> int:
+        """One bank id as written in cfg or on a command line."""
+        s = s.strip()
+        if self.bank_ids == "hex" and not s.lower().startswith("0x"):
+            return int(s, 16)
+        return int(s, 0)
+
+    def parse_bank_list(self, s: str) -> list[int]:
+        return [self.parse_bank_id(x) for x in s.replace(",", " ").split() if x.strip()]
 
     def is_migrated(self, bank: int) -> bool:
         if self.migrated in ("all", "*"):
             return True
         if self.migrated:
-            nums = {int(x, 0) for x in self.migrated.replace(",", " ").split() if x}
-            if bank in nums:
+            if bank in set(self.parse_bank_list(self.migrated)):
                 return True
         return (self.source_path / f"{self.bank_stem(bank)}.asm").is_file()
 
@@ -109,7 +125,16 @@ class Game:
         return self.root / "tools" / "sjasmplus"
 
     def bank_stem(self, bank: int) -> str:
+        if self.bank_ids == "hex":
+            return f"{self.bank_prefix}_{bank:02x}"
         return f"{self.bank_prefix}{bank:02d}"
+
+    def window_stem_re(self) -> "re.Pattern[str]":
+        """Stems of per-bank or window files (hex: bank_01_02_03)."""
+        pre = re.escape(self.bank_prefix)
+        if self.bank_ids == "hex":
+            return re.compile(rf"^{pre}(?:_[0-9a-f]{{2}})+$", re.I)
+        return re.compile(rf"^(?:{pre}|seg)\d{{2}}$", re.I)
 
     def leftover_bin(self, bank: int) -> Path:
         return self.source_path / f"{self.bank_stem(bank)}.bin"

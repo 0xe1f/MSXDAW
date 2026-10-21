@@ -36,13 +36,23 @@ blocks="${3:-}"
 root="$(python3 "$DAW/lib/game.py" --root)"
 cd "$root"
 
+# <bank> is decimal, or hex when bank_ids = hex; the rest of the script is decimal.
+bank="$(python3 -c "
+import sys
+sys.path.insert(0, '${DAW}/lib')
+from game import load
+print(load().parse_bank_id('${bank}'))
+")"
+
 if [ -z "$org" ]; then
   org="$(python3 "$DAW/lib/game.py" --bank-org "$bank")"
 fi
-prefix="$(python3 "$DAW/lib/game.py" --get bank_prefix)"
-[ -n "$prefix" ] || prefix=bank
-nn=$(printf "%02d" "$bank")
-stem="${prefix}${nn}"
+stem="$(python3 -c "
+import sys
+sys.path.insert(0, '${DAW}/lib')
+from game import load
+print(load().bank_stem(int('${bank}')))
+")"
 
 rom="$(python3 "$DAW/lib/game.py" --rom)"
 [ -f "$rom" ] || { echo "no ROM at $rom (run make, or set ROM=)" >&2; exit 1; }

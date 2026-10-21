@@ -58,6 +58,9 @@ If unfinished work can be assigned to top-level bank/window files, a Markdown
 table follows for files that still contain `INCBIN`, auto labels, or
 undocumented named `call` targets. Window stems are `banks_` plus hexadecimal
 bank ids; conventional `bankNN` and legacy `segNN` stems are also recognized.
+With `bank_ids = hex` in `workbench.cfg`, stems are `<bank_prefix>_<hh>` per
+bank and `<bank_prefix>_<hh>_<hh>...` per window (`bank_0e`, `bank_01_02_03`),
+and leftover bins are `<bank_prefix>_<hh>.bin`.
 
 Use JSON for scripts:
 

@@ -48,7 +48,8 @@ tools/workbench/msx/romscan.py --rom /tmp/cart.rom \
 `xref` arguments and defaults:
 
 - `ADDR` is the 16-bit CPU target to search for.
-- `--banks LIST` is a comma-separated list of decimal bank indexes. Default:
+- `--banks LIST` is a comma-separated list of bank indexes (decimal, or hex when
+  `bank_ids = hex`). Default:
   `scan_banks` from `workbench.cfg`. The deprecated alias `--segs` is accepted.
 - `--base ADDR` assigns one CPU origin to every listed bank. Default: each
   bank's individual `bank_org` value.

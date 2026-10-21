@@ -38,8 +38,11 @@ Arguments:
 At least `BANK` is required. Extra arguments beyond these three are currently
 ignored rather than rejected.
 
-The script also uses `bank_size`, `bank_prefix`, `rom`, and `master` from
-configuration.
+The script also uses `bank_size`, `bank_prefix`, `bank_ids`, `rom`, and
+`master` from configuration. `bank_ids = hex` (default `dec`) makes stems
+`<bank_prefix>_<hh>` and reads hex ids in `scan_banks`, `migrated`, and
+`romscan --banks`; `bank_org` is always hex. With it, the outputs below are
+`generated/bank_07.*`.
 
 ## Regenerate one bank
 

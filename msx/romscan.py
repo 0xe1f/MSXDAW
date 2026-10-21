@@ -60,7 +60,7 @@ def parse_int(s):
 def cmd_xref(args):
     g, rom = load_rom(args.rom)
     target = parse_int(args.addr)
-    banks = [int(x) for x in args.banks.split(",")] if args.banks else g.scan_banks
+    banks = g.parse_bank_list(args.banks) if args.banks else g.scan_banks
     lo, hi = target & 0xFF, target >> 8
     found = 0
     for bank in banks:

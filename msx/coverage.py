@@ -165,7 +165,7 @@ def _window_key(game: Game, path: Path) -> str | None:
     if len(rel.parts) != 1:
         return None
     stem = path.stem
-    if WINDOW_BANKS.match(stem) or WINDOW_BANKN.match(stem):
+    if WINDOW_BANKS.match(stem) or WINDOW_BANKN.match(stem) or game.window_stem_re().match(stem):
         return stem
     return None
 
@@ -175,7 +175,7 @@ def _incbin_len(game: Game, rel: str, off: str | None, length: str | None) -> in
     size = p.stat().st_size if p.is_file() else 0
     if not size:
         name = Path(rel).name
-        if re.match(r"^(?:bank|seg)\d{2}\.bin$", name, re.I):
+        if game.window_stem_re().match(Path(name).stem) and name.lower().endswith(".bin"):
             size = game.bank_size
         else:
             return 0
