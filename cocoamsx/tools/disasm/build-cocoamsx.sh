@@ -14,7 +14,7 @@ fi
 xcodebuild -scheme CocoaMSX -configuration Debug \
   -project "$src/CocoaMSX.xcodeproj" \
   -derivedDataPath "$src/generated/cocoamsx-dd" \
-  MACOSX_DEPLOYMENT_TARGET=11.0 \
+  MACOSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-12.0}" \
   GCC_PREPROCESSOR_DEFINITIONS='$(inherited) DISASMTRACE fdopen=fdopen' \
   OTHER_CPLUSPLUSFLAGS='$(inherited) -Wno-c++11-narrowing' \
   CODE_SIGNING_ALLOWED=NO \
