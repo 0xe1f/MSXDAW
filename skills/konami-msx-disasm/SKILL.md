@@ -98,7 +98,9 @@ and does not add names.
    the ones with the most callers first. Rename that routine’s branch
    labels in the same pass. A banner goes on the entry only: what it does,
    and which registers or RAM are inputs. Branch targets get a short name
-   and usually no paragraph.
+   and usually no paragraph. The name states the job. An address, a
+   register, or a size is not a name (`blit_c0`, `row_e5`, `origin_7`).
+   The ROM address stays in the banner.
 4. **Symbolic dispatch.** Once those handlers have names, the inline word
    table is `defw` of the names. `dec a` before the call means index base 1
    (`msx-code-data`). When an index byte’s values are known, put the ids in
@@ -136,8 +138,12 @@ unused and still referenced. Do not delete it, and do not rename it to
 ## Conventions
 
 - Never leave z80dasm `;addr bytes ascii` tails in committed `.asm`.
-- Rename `sub_XXXXh`/`lXXXXh` when confirmed; keep the ROM address in the
-  routine’s banner. What belongs in `msx.sym` is under Naming a window.
+- Rename `sub_XXXXh`/`lXXXXh` when confirmed, and rename a later label the
+  same way once its job is known. Keep the ROM address in the banner.
+  `blit_c0`, `fill_4b`, and `nz_d8` are not finished names: they record an
+  address or an operand and do not say what the routine is for. A guess
+  keeps the previous name in the banner. A confirmed name does not.
+  What belongs in `msx.sym` is under Naming a window.
 - Casing: `UPPER_SNAKE` only for MSX BIOS and macro-like helpers (`DISPATCH_A`);
   `lower_snake` for game code/data. Numeric type ids live in `INCLUDE`d `.inc`
   files, never `msx.sym`. Jump tables stay next to their dispatcher.
@@ -155,7 +161,10 @@ unused and still referenced. Do not delete it, and do not rename it to
   soon as the layout is known. Do not leave 1bpp as hex because a sheet is
   not dumped yet (`msx-gfx-sheets`).
 - A symbol in an immediate operand is usually a lie (`ld de,CHKRAM` was `ld de,0`).
-  Only `call`/`jp`/`jr` targets are real references.
+  Only `call`/`jp`/`jr` targets are real references. An immediate that
+  happens to equal a label’s address is still a constant. A VRAM point
+  written as `ld de,some_label` stays hex, so renaming that label does
+  not invent a reference.
 - `msx.sym` is flat; the ROM is banked. `bank_sym.py` filters per CPU window.
 
 Text is often `(ASCII - offset)`. Use an sjasmplus `MACRO` so source stays
